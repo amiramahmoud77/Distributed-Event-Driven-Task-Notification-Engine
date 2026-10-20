@@ -1,0 +1,29 @@
+{
+  "name": "task-engine",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev:server": "tsx watch src/server.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bullmq": "latest",
+    "cors": "latest",
+    "dotenv": "latest",
+    "express": "latest",
+    "ioredis": "latest",
+    "mongoose": "latest",
+    "winston": "latest"
+  },
+  "devDependencies": {
+    "@types/cors": "latest",
+    "@types/express": "latest",
+    "@types/node": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}
