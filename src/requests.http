@@ -1,0 +1,15 @@
+### Test Root Endpoint
+GET http://localhost:5000/
+
+### Get All Tasks
+GET http://localhost:5000/api/tasks
+
+### Create a New Task
+POST http://localhost:5000/api/tasks
+Content-Type: application/json
+
+{
+  "title": "Learn Node.js Architecture",
+  "description": "Understanding controllers, routes, and mongoose models",
+  "priority": "HIGH"
+}
