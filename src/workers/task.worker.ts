@@ -1,10 +1,11 @@
 import { Worker } from 'bullmq';
+import { NotificationService } from '../services/notification.service';
 
 const worker = new Worker(
   'task-events',
   async job => {
-    console.log(`Processing job ${job.id} with data:`, job.data);
-   
+    console.log(`Processing job ${job.id} with name: ${job.name}`);
+    await NotificationService.sendNotification(job.name, job.data);
   },
   {
     connection: {
