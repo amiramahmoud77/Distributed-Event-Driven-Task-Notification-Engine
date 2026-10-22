@@ -1,21 +1,36 @@
-import express, { Application, Request, Response } from 'express';
-import cors from 'cors';
-import taskRoutes from './routes/task.routes';
-import authRoutes from './routes/auth.routes';
+import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
-import { swaggerSpec } from './config/swagger';
 
-const app: Application = express();
+const options: swaggerJsdoc.Options = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Distributed Event-Driven Task & Notification Engine API',
+      version: '1.0.0',
+      description: 'Enterprise-level API documentation with Node.js, TypeScript, Express, and BullMQ',
+    },
+    servers: [
+      {
+        url: 'http://localhost:5000',
+        description: 'Development Server',
+      },
+    ],
+    components: {
+      securitySchemes: {
+        BearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
+  },
+  apis: ['./src/routes/*.ts', './src/controllers/*.ts'],
+};
 
-app.use(express.json()); 
-app.use(cors());        
+export const swaggerSpec = swaggerJsdoc(options);
 
-// Main Task Routes
-app.use('/api/tasks', taskRoutes);
-app.use('/api/v1/auth', authRoutes);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.get('/', (req: Request, res: Response) => {
-  res.json({ message: 'Task Engine API is running successfully!' });
-});
-
-export default app;
+export const setupSwagger = (app: any): void => {
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  console.log('📄 Swagger Docs available at http://localhost:5000/api-docs');
+};
