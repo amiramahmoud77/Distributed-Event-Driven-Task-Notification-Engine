@@ -19,6 +19,7 @@
     "ioredis": "latest",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "latest",
+    "nodemailer": "^10.2.0",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",
     "winston": "latest"
@@ -29,6 +30,7 @@
     "@types/express": "latest",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "latest",
+    "@types/nodemailer": "^8.0.2",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "tsx": "latest",
