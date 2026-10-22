@@ -1,5 +1,6 @@
+import { Express } from 'express';
 import swaggerJsdoc from 'swagger-jsdoc';
-import { SwaggerOptions } from 'swagger-ui-express';
+import swaggerUi from 'swagger-ui-express';
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -25,7 +26,12 @@ const options: swaggerJsdoc.Options = {
       },
     },
   },
-  apis: ['./src/routes/*.ts', './src/controllers/*.ts'],
+  apis: ['./src/docs/*.yaml', './src/routes/*.ts', './src/controllers/*.ts'],
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
+
+export const setupSwagger = (app: Express): void => {
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  console.log('📄 Swagger Docs available at http://localhost:5000/api-docs');
+};
