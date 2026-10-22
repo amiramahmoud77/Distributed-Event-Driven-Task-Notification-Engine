@@ -1,4 +1,4 @@
-#  Distributed Event-Driven Task & Notification Engine
+# 🌟 Distributed Event-Driven Task & Notification Engine
 
 > An enterprise-grade, event-driven backend system built with Node.js, Express, TypeScript, MongoDB, and BullMQ for asynchronous task processing and automated email notifications.
 
@@ -12,6 +12,7 @@
 - **Queue & Event Broker:** BullMQ & Redis (Asynchronous event-driven architecture)
 - **Authentication:** JWT-based Auth with Role-Based Access Control (RBAC)
 - **Email Service:** Nodemailer for automated background notifications
+- **API Documentation:** OpenAPI 3.0 / Swagger UI (Modular YAML architecture)
 
 ---
 
@@ -25,6 +26,18 @@
 | **Task Status Workflow** | Dedicated state transition management (`pending`, `in-progress`, `completed`, `cancelled`). | ✅ Completed |
 | **Event-Driven Architecture** | Decoupled background processing using BullMQ for asynchronous task events. | ✅ Completed |
 | **Automated Notifications** | Background workers processing queue events to dispatch instant email notifications. | ✅ Completed |
+| **API Documentation** | Professional OpenAPI 3.0 / Swagger documentation using modular YAML files (`/api-docs`). | ✅ Completed |
+
+---
+
+## 📄 API Documentation (Swagger)
+
+The project includes an interactive, enterprise-grade OpenAPI 3.0 (Swagger) documentation, structured cleanly using modular YAML files under `src/docs/`.
+
+- **Access URL (when running):** `http://localhost:5000/api-docs`
+- **Documented Modules:**
+  - **Auth (`auth.yaml`):** User registration and login (`/api/v1/auth/*`)
+  - **Tasks (`tasks.yaml`):** Task creation and retrieval with JWT Bearer authentication (`/api/v1/tasks/*`)
 
 ---
 
@@ -43,4 +56,3 @@
 - Node.js & npm installed
 - Running Redis instance (Local or Docker)
 - MongoDB
-
