@@ -1,11 +1,20 @@
 import { Worker } from 'bullmq';
-import { NotificationService } from '../services/notification.service';
+import { sendTaskNotificationEmail } from '../services/email.service';
 
 const worker = new Worker(
   'task-events',
-  async job => {
+  async (job) => {
     console.log(`Processing job ${job.id} with name: ${job.name}`);
-    await NotificationService.sendNotification(job.name, job.data);
+    const { task, userEmail } = job.data;
+
+    if (userEmail) {
+      await sendTaskNotificationEmail(
+        userEmail,
+        `Task ${job.name.toUpperCase()}: ${task?.title || 'Notification'}`,
+        task?.title || 'Task Details',
+        job.name
+      );
+    }
   },
   {
     connection: {
@@ -15,10 +24,12 @@ const worker = new Worker(
   }
 );
 
-worker.on('completed', job => {
+worker.on('completed', (job) => {
   console.log(`Job ${job.id} has completed successfully!`);
 });
 
 worker.on('failed', (job, err) => {
   console.log(`Job ${job?.id} has failed with error ${err.message}`);
 });
+
+export default worker;
