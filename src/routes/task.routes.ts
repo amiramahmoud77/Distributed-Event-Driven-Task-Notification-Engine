@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { protect, authorize } from '../middlewares/auth.middleware';
 import {
   createTask,
   getTasks,
@@ -9,10 +10,10 @@ import {
 
 const router = Router();
 
-// Route: /api/tasks
+router.use(protect);
+
 router.route('/').post(createTask).get(getTasks);
 
-// Route: /api/tasks/:id
-router.route('/:id').get(getTaskById).put(updateTask).delete(deleteTask);
+router.route('/:id').get(getTaskById).put(updateTask).delete(authorize('admin'), deleteTask);
 
 export default router;
