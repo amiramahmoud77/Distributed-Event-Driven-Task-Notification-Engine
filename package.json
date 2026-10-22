@@ -11,18 +11,26 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "bullmq": "latest",
     "cors": "latest",
     "dotenv": "latest",
     "express": "latest",
     "ioredis": "latest",
+    "jsonwebtoken": "^9.0.3",
     "mongoose": "latest",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1",
     "winston": "latest"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/cors": "latest",
     "@types/express": "latest",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "latest",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "tsx": "latest",
     "typescript": "latest"
   }
