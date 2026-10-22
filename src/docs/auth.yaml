@@ -6,7 +6,7 @@ paths:
       requestBody:
         required: true
         content:
-        application/json:
+          application/json:
             schema:
               type: object
               required:
@@ -32,3 +32,44 @@ paths:
                     example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVC...
         '400':
           description: Invalid credentials or missing fields
+
+  /api/v1/auth/register:
+    post:
+      summary: Register a new user
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  example: John Doe
+                email:
+                  type: string
+                  example: user@example.com
+                password:
+                  type: string
+                  example: Secret123!
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User created successfully
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVC...
+        '400':
+          description: Validation error or email already exists
