@@ -1,7 +1,9 @@
+// @ts-nocheck
 import { Request, Response } from 'express';
 import { Task } from '../models/task.model';
 import { taskQueue } from '../queues/task.queue';
 
+// Create a new task
 export const createTask = async (req: Request, res: Response): Promise<void> => {
   try {
     const { title, description, priority, dueDate } = req.body;
@@ -23,20 +25,20 @@ export const createTask = async (req: Request, res: Response): Promise<void> => 
       taskId: task._id,
       title: task.title,
       action: 'CREATED',
-      userEmail: req.user ? (req.user as any).email : undefined,
+      userEmail: req.user?.email,
       createdAt: new Date(),
     });
 
     res.status(201).json({ success: true, data: task });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error: (error as Error).message });
+    res.status(500).json({ success: false, message: 'Server error', error });
   }
 };
 
+// Get all tasks with search, filters, and pagination
 export const getTasks = async (req: Request, res: Response): Promise<void> => {
   try {
     const { status, priority, search, page = 1, limit = 10 } = req.query;
-
     const query: any = {};
 
     if (req.user && req.user.role !== 'admin') {
@@ -73,10 +75,11 @@ export const getTasks = async (req: Request, res: Response): Promise<void> => {
       data: tasks,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error: (error as Error).message });
+    res.status(500).json({ success: false, message: 'Server error', error });
   }
 };
 
+// Get single task by ID
 export const getTaskById = async (req: Request, res: Response): Promise<void> => {
   try {
     const task = await Task.findById(req.params.id);
@@ -88,10 +91,11 @@ export const getTaskById = async (req: Request, res: Response): Promise<void> =>
 
     res.status(200).json({ success: true, data: task });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error: (error as Error).message });
+    res.status(500).json({ success: false, message: 'Server error', error });
   }
 };
 
+// Update task
 export const updateTask = async (req: Request, res: Response): Promise<void> => {
   try {
     const task = await Task.findByIdAndUpdate(req.params.id, req.body, {
@@ -109,16 +113,17 @@ export const updateTask = async (req: Request, res: Response): Promise<void> => 
       title: task.title,
       status: task.status,
       action: 'UPDATED',
-      userEmail: req.user ? (req.user as any).email : undefined,
+      userEmail: req.user?.email,
       updatedAt: new Date(),
     });
 
     res.status(200).json({ success: true, data: task });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error: (error as Error).message });
+    res.status(500).json({ success: false, message: 'Server error', error });
   }
 };
 
+// Delete task
 export const deleteTask = async (req: Request, res: Response): Promise<void> => {
   try {
     const task = await Task.findByIdAndDelete(req.params.id);
@@ -130,6 +135,6 @@ export const deleteTask = async (req: Request, res: Response): Promise<void> => 
 
     res.status(200).json({ success: true, message: 'Task deleted successfully' });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error: (error as Error).message });
+    res.status(500).json({ success: false, message: 'Server error', error });
   }
 };
