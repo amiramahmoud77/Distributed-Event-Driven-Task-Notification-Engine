@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { Task } from '../models/task.model';
 import { taskQueue } from '../queues/task.queue';
 
-// Create a new task
 export const createTask = async (req: Request, res: Response): Promise<void> => {
   try {
     const { title, description, priority, dueDate } = req.body;
@@ -17,32 +16,67 @@ export const createTask = async (req: Request, res: Response): Promise<void> => 
       description,
       priority,
       dueDate,
+      userId: req.user?.id,
     });
 
     await taskQueue.add('TASK_CREATED', {
       taskId: task._id,
       title: task.title,
       action: 'CREATED',
+      userEmail: req.user ? (req.user as any).email : undefined,
       createdAt: new Date(),
     });
 
     res.status(201).json({ success: true, data: task });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error });
+    res.status(500).json({ success: false, message: 'Server error', error: (error as Error).message });
   }
 };
 
-// Get all tasks
 export const getTasks = async (req: Request, res: Response): Promise<void> => {
   try {
-    const tasks = await Task.find().sort({ createdAt: -1 });
-    res.status(200).json({ success: true, count: tasks.length, data: tasks });
+    const { status, priority, search, page = 1, limit = 10 } = req.query;
+
+    const query: any = {};
+
+    if (req.user && req.user.role !== 'admin') {
+      query.userId = req.user.id;
+    }
+
+    if (status) {
+      query.status = status;
+    }
+
+    if (priority) {
+      query.priority = priority;
+    }
+
+    if (search) {
+      query.title = { $regex: search, $options: 'i' };
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const tasks = await Task.find(query)
+      .skip(skip)
+      .limit(Number(limit))
+      .sort({ createdAt: -1 });
+
+    const total = await Task.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      count: tasks.length,
+      total,
+      totalPages: Math.ceil(total / Number(limit)),
+      currentPage: Number(page),
+      data: tasks,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error });
+    res.status(500).json({ success: false, message: 'Server error', error: (error as Error).message });
   }
 };
 
-// Get single task by ID
 export const getTaskById = async (req: Request, res: Response): Promise<void> => {
   try {
     const task = await Task.findById(req.params.id);
@@ -54,11 +88,10 @@ export const getTaskById = async (req: Request, res: Response): Promise<void> =>
 
     res.status(200).json({ success: true, data: task });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error });
+    res.status(500).json({ success: false, message: 'Server error', error: (error as Error).message });
   }
 };
 
-// Update task
 export const updateTask = async (req: Request, res: Response): Promise<void> => {
   try {
     const task = await Task.findByIdAndUpdate(req.params.id, req.body, {
@@ -76,16 +109,16 @@ export const updateTask = async (req: Request, res: Response): Promise<void> => 
       title: task.title,
       status: task.status,
       action: 'UPDATED',
+      userEmail: req.user ? (req.user as any).email : undefined,
       updatedAt: new Date(),
     });
 
     res.status(200).json({ success: true, data: task });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error });
+    res.status(500).json({ success: false, message: 'Server error', error: (error as Error).message });
   }
 };
 
-// Delete task
 export const deleteTask = async (req: Request, res: Response): Promise<void> => {
   try {
     const task = await Task.findByIdAndDelete(req.params.id);
@@ -97,6 +130,6 @@ export const deleteTask = async (req: Request, res: Response): Promise<void> => 
 
     res.status(200).json({ success: true, message: 'Task deleted successfully' });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error });
+    res.status(500).json({ success: false, message: 'Server error', error: (error as Error).message });
   }
 };
