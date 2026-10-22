@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { protect, authorize } from '../middlewares/auth.middleware';
+import { updateTaskStatus } from '../controllers/task-status.controller';
 import {
   createTask,
   getTasks,
@@ -15,5 +16,6 @@ router.use(protect);
 router.route('/').post(createTask).get(getTasks);
 
 router.route('/:id').get(getTaskById).put(updateTask).delete(authorize('admin'), deleteTask);
+router.patch('/:id/status', updateTaskStatus);
 
 export default router;
