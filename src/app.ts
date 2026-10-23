@@ -1,36 +1,19 @@
-import swaggerJsdoc from 'swagger-jsdoc';
-import swaggerUi from 'swagger-ui-express';
+import express from 'express';
+import { setupSwagger } from './config/swagger'; 
+import { globalErrorHandler } from './middlewares/error.middleware';
 
-const options: swaggerJsdoc.Options = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'Distributed Event-Driven Task & Notification Engine API',
-      version: '1.0.0',
-      description: 'Enterprise-level API documentation with Node.js, TypeScript, Express, and BullMQ',
-    },
-    servers: [
-      {
-        url: 'http://localhost:5000',
-        description: 'Development Server',
-      },
-    ],
-    components: {
-      securitySchemes: {
-        BearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-        },
-      },
-    },
-  },
-  apis: ['./src/routes/*.ts', './src/controllers/*.ts'],
-};
+const app = express();
 
-export const swaggerSpec = swaggerJsdoc(options);
+// Middlewares
+app.use(express.json());
 
-export const setupSwagger = (app: any): void => {
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-  console.log('📄 Swagger Docs available at http://localhost:5000/api-docs');
-};
+// Initialize Swagger Documentation
+setupSwagger(app);
+
+// Routes (Example)
+// app.use('/api/v1/tasks', taskRoutes);
+
+// Global Error Handler Middleware (Must be the last middleware)
+app.use(globalErrorHandler);
+
+export default app;
