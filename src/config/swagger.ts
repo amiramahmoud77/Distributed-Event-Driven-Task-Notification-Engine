@@ -24,6 +24,21 @@ const options: swaggerJsdoc.Options = {
           bearerFormat: 'JWT',
         },
       },
+      schemas: {
+        Error: {
+          type: 'object',
+          properties: {
+            status: {
+              type: 'string',
+              example: 'fail',
+            },
+            message: {
+              type: 'string',
+              example: 'Resource not found or invalid input',
+            },
+          },
+        },
+      },
     },
   },
   apis: ['./src/docs/*.yaml', './src/routes/*.ts', './src/controllers/*.ts'],
@@ -33,5 +48,5 @@ export const swaggerSpec = swaggerJsdoc(options);
 
 export const setupSwagger = (app: Express): void => {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-  console.log('📄 Swagger Docs available at http://localhost:5000/api-docs');
+  console.log('Swagger Docs available at http://localhost:5000/api-docs');
 };
