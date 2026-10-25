@@ -12,6 +12,7 @@
 - **Queue & Event Broker:** BullMQ & Redis (Asynchronous event-driven architecture)
 - **Authentication:** JWT-based Auth with Role-Based Access Control (RBAC)
 - **Security & Logging:** Helmet (HTTP Security Headers), Express Rate Limit, Winston (Centralized Logging)
+- **DevOps & Containerization:** Docker & Docker Compose (Multi-container orchestration)
 - **Email Service:** Nodemailer for automated background notifications
 - **API Documentation:** OpenAPI 3.0 / Swagger UI (Modular YAML architecture)
 
@@ -29,6 +30,7 @@
 | **Automated Notifications** | Background workers processing queue events to dispatch instant email notifications. | ✅ Completed |
 | **Global Error Handling & Logging** | Centralized error management with custom operational classes and Winston persistent logging (`logs/`). | ✅ Completed |
 | **Security & Rate Limiting** | Enterprise security hardening using Helmet HTTP headers and Express Rate Limit to prevent DDoS/Brute-force attacks. | ✅ Completed |
+| **Docker Containerization** | Fully containerized environment with Docker & Docker Compose for seamless deployment. | ✅ Completed |
 | **API Documentation** | Professional OpenAPI 3.0 / Swagger documentation using modular YAML files (`/api-docs`). | ✅ Completed |
 
 ---
@@ -53,9 +55,14 @@ The project includes an interactive, enterprise-grade OpenAPI 3.0 (Swagger) docu
 
 ---
 
-## ⚙️ Getting Started
+## ⚙️ Getting Started & Deployment
 
 ### Prerequisites
-- Node.js & npm installed
-- Running Redis instance (Local or Docker)
-- MongoDB
+- Node.js & npm installed (for local development)
+- **Docker & Docker Compose** (Recommended for seamless running)
+
+### Running with Docker Compose (Recommended)
+You can spin up the entire stack (Node.js API, MongoDB, and Redis) with a single command:
+
+```bash
+docker-compose up --build
