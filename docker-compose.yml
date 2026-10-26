@@ -11,8 +11,10 @@ services:
       - REDIS_PORT=6379
       - MONGO_URI=mongodb://mongo:27017/task-engine
     depends_on:
-      - redis
-      - mongo
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   redis:
     image: redis:alpine
@@ -25,6 +27,11 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 volumes:
   mongo_data:
