@@ -39,7 +39,7 @@
 
 The project includes an interactive, enterprise-grade OpenAPI 3.0 (Swagger) documentation, structured cleanly using modular YAML files under `src/docs/`.
 
-- **Access URL (when running):** `http://localhost:5000/api-docs`
+- **Access URL (when running via Docker):** `http://localhost:5001/api-docs`
 - **Documented Modules:**
   - **Auth (`auth.yaml`):** User registration and login (`/api/v1/auth/*`)
   - **Tasks (`tasks.yaml`):** Task creation and retrieval with JWT Bearer authentication (`/api/v1/tasks/*`)
@@ -71,16 +71,24 @@ This project is fully containerized and orchestrated using **Docker Compose**, a
 1. **`app` (Node.js & TypeScript API):** 
    - Built using a lightweight `node:18-alpine` base image.
    - Automatically connects to MongoDB and Redis inside the Docker isolated network.
+   - Mapped to external port `5001` (`5001:5000`) to avoid local port conflicts.
 2. **`mongo` (Database):** 
    - Runs the official MongoDB image with a dedicated named volume (`mongo_data`) ensuring your tasks and users data persist even if containers are stopped or removed.
 3. **`redis` (Broker & Queue):** 
    - Runs Redis to power BullMQ background job processing and asynchronous event handling.
 
-### 🚀 How to Run with Docker
+### 🛡️ Database Health Checks & Startup Reliability
+To ensure the backend application never crashes due to database connection race conditions, the project implements professional **Docker Health Checks**:
+- The `mongo` container features an active health check (`mongosh` ping command) verifying that the database engine is fully up and responsive before dependent services start.
+- The `app` service utilizes `condition: service_healthy` in its `depends_on` configuration, guaranteeing that Node.js will only spin up and accept traffic *after* MongoDB has completed its startup sequence.
+
+###  How to Run with Docker
 
 1. Make sure Docker Desktop is running on your machine.
-2. Ensure your `.env` file is properly configured at the root directory.
-3. Run the following command to build and spin up all services:
-
-```bash
-docker-compose up --build
+2. Ensure your `.env` file is properly configured at the root directory:
+   ```env
+   PORT=5000
+   MONGO_URI=mongodb://mongo:27017/task-engine
+   REDIS_HOST=redis
+   REDIS_PORT=6379
+   JWT_SECRET=your_super_secret_jwt_key_here
