@@ -61,8 +61,26 @@ The project includes an interactive, enterprise-grade OpenAPI 3.0 (Swagger) docu
 - Node.js & npm installed (for local development)
 - **Docker & Docker Compose** (Recommended for seamless running)
 
-### Running with Docker Compose (Recommended)
-You can spin up the entire stack (Node.js API, MongoDB, and Redis) with a single command:
+---
+
+## 🐳 Docker & Containerization (DevOps Guide)
+
+This project is fully containerized and orchestrated using **Docker Compose**, allowing you to run the complete microservices architecture (Node.js API, MongoDB, and Redis) with a single command without installing databases locally.
+
+### 📦 Services Breakdown
+1. **`app` (Node.js & TypeScript API):** 
+   - Built using a lightweight `node:18-alpine` base image.
+   - Automatically connects to MongoDB and Redis inside the Docker isolated network.
+2. **`mongo` (Database):** 
+   - Runs the official MongoDB image with a dedicated named volume (`mongo_data`) ensuring your tasks and users data persist even if containers are stopped or removed.
+3. **`redis` (Broker & Queue):** 
+   - Runs Redis to power BullMQ background job processing and asynchronous event handling.
+
+### 🚀 How to Run with Docker
+
+1. Make sure Docker Desktop is running on your machine.
+2. Ensure your `.env` file is properly configured at the root directory.
+3. Run the following command to build and spin up all services:
 
 ```bash
 docker-compose up --build
