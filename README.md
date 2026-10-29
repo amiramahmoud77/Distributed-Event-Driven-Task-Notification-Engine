@@ -1,3 +1,4 @@
+
 # 🌟 Distributed Event-Driven Task & Notification Engine
 
 > An enterprise-grade, event-driven backend system built with Node.js, Express, TypeScript, MongoDB, and BullMQ for asynchronous task processing and automated email notifications.
@@ -13,6 +14,7 @@
 - **Authentication:** JWT-based Auth with Role-Based Access Control (RBAC)
 - **Security & Logging:** Helmet (HTTP Security Headers), Express Rate Limit, Winston (Centralized Logging)
 - **DevOps & Containerization:** Docker & Docker Compose (Multi-container orchestration)
+- **CI/CD Pipeline:** GitHub Actions & Docker Hub Integration
 - **Email Service:** Nodemailer for automated background notifications
 - **API Documentation:** OpenAPI 3.0 / Swagger UI (Modular YAML architecture)
 
@@ -31,7 +33,36 @@
 | **Global Error Handling & Logging** | Centralized error management with custom operational classes and Winston persistent logging (`logs/`). | ✅ Completed |
 | **Security & Rate Limiting** | Enterprise security hardening using Helmet HTTP headers and Express Rate Limit to prevent DDoS/Brute-force attacks. | ✅ Completed |
 | **Docker Containerization** | Fully containerized environment with Docker & Docker Compose for seamless deployment. | ✅ Completed |
+| **CI/CD Automation Pipeline** | Automated build verification, TypeScript compilation checks, and continuous deployment to Docker Hub. | ✅ Completed |
 | **API Documentation** | Professional OpenAPI 3.0 / Swagger documentation using modular YAML files (`/api-docs`). | ✅ Completed |
+
+---
+
+##  Continuous Integration & Continuous Deployment (CI/CD)
+
+The project leverages **GitHub Actions** for an automated, production-grade CI/CD pipeline, ensuring high code quality and seamless container delivery.
+
+
+```
+
+[ Push / Merge to main ]
+│
+├──> 1. CI Phase: Run Automated Build & TypeScript Checks (tsc)
+│
+└──> 2. CD Phase: Authenticate with Docker Hub
+│
+└──> Build Docker Image & Push to Docker Hub (`/task-engine:latest`)
+
+```
+
+### ⚙️ Pipeline Lifecycle & Automation Mechanics:
+1. **Continuous Integration (CI):**
+   - Triggers automatically on any `push` or `pull_request` targeting the `main` branch.
+   - Sets up a clean Node.js environment, installs dependencies via `npm ci`, and executes `npm run build` (`tsc`) to guarantee zero compilation errors before merging.
+2. **Continuous Deployment (CD):**
+   - Automatically executes after the CI checks pass upon pushing/merging to `main`.
+   - Authenticates securely with **Docker Hub** using encrypted repository secrets (`DOCKER_USERNAME` and `DOCKER_PASSWORD`).
+   - Builds the production Docker image and publishes it instantly to Docker Hub.
 
 ---
 
@@ -92,3 +123,18 @@ To ensure the backend application never crashes due to database connection race 
    REDIS_HOST=redis
    REDIS_PORT=6379
    JWT_SECRET=your_super_secret_jwt_key_here
+
+
+3. Spin up all containers in detached mode:
+
+```bash
+docker-compose up -d --build
+
+```
+
+
+4. Check the status of your running services:
+```bash
+docker-compose ps
+
+```
