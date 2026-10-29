@@ -6,6 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey123';
 interface JwtPayload {
   id: string;
   role: string;
+  email?: string; 
 }
 
 // 1. Protection Middleware 
@@ -23,7 +24,12 @@ export const protect = (req: Request, res: Response, next: NextFunction): void =
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-    req.user = { id: decoded.id, role: decoded.role };
+  
+    req.user = { 
+      id: decoded.id, 
+      role: decoded.role, 
+      email: decoded.email || '' 
+    };
     next();
   } catch (error) {
     res.status(401).json({ success: false, message: 'Token is invalid or expired' });
