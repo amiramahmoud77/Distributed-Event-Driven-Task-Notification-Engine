@@ -1,4 +1,4 @@
-
+version: '3.8'
 
 services:
   app:
@@ -16,10 +16,22 @@ services:
       redis:
         condition: service_started
 
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - app
+
   redis:
     image: redis:alpine
     ports:
       - "6379:6379"
+
+  matching:
+    image: redis:alpine
 
   mongo:
     image: mongo:latest
