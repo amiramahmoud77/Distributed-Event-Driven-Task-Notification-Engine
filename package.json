@@ -15,7 +15,7 @@
   "dependencies": {
     "bcrypt": "^6.0.0",
     "bullmq": "latest",
-    "cors": "latest",
+    "cors": "^2.8.6",
     "dotenv": "latest",
     "express": "latest",
     "express-rate-limit": "^8.7.1",
@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
-    "@types/cors": "latest",
+    "@types/cors": "^2.8.19",
     "@types/express": "latest",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "latest",
