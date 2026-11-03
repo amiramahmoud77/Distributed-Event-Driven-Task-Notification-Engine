@@ -7,6 +7,11 @@ export function App() {
   const [currentView, setCurrentView] = useState<'login' | 'signup' | 'dashboard'>('login');
   const [isDarkMode, setIsDarkMode] = useState(true);
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setCurrentView('login');
+  };
+
   return (
     <>
       {currentView === 'login' && (
@@ -28,7 +33,7 @@ export function App() {
 
       {currentView === 'dashboard' && (
         <Dashboard
-          onLogout={() => setCurrentView('login')}
+          onLogout={handleLogout}
           isDarkMode={isDarkMode}
           setIsDarkMode={setIsDarkMode}
         />
