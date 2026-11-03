@@ -4,7 +4,9 @@ import { Signup } from './components/Signup';
 import { Dashboard } from './components/Dashboard';
 
 export function App() {
-  const [currentView, setCurrentView] = useState<'login' | 'signup' | 'dashboard'>('login');
+  const [currentView, setCurrentView] = useState<'login' | 'signup' | 'dashboard'>(
+  () => (localStorage.getItem('token') ? 'dashboard' : 'login')
+);
   const [isDarkMode, setIsDarkMode] = useState(true);
 
   const handleLogout = () => {
