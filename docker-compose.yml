@@ -26,6 +26,9 @@ services:
       - VITE_API_PROXY=http://app:5000
     depends_on:
       - app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
 
   redis:
     image: redis:7-alpine
@@ -35,7 +38,7 @@ services:
   mongo:
     image: mongo:7
     ports:
-       - "127.0.0.1:27018:27017"
+      - "127.0.0.1:27018:27017"
     volumes:
       - mongo_data:/data/db
     healthcheck:
