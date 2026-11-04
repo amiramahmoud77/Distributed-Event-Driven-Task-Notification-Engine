@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Sun, Moon, LogOut, Plus } from 'lucide-react';
+import { Sun, Moon, LogOut, Plus, Inbox } from 'lucide-react';
 import { api } from '../api';
 import { CreateTaskModal } from './CreateTaskModal';
 import type { Task, TaskPriority, TaskStatus } from '../types';
@@ -17,9 +17,14 @@ const palette: Record<TaskStatus, { dark: string; light: string; label: string }
   FAILED: { dark: '#F07878', light: '#C23B3B', label: 'Failed' },
 };
 
+const priorityColor: Record<TaskPriority, { dark: string; light: string }> = {
+  HIGH: { dark: '#F08A7E', light: '#D4503F' },
+  MEDIUM: { dark: '#B79CF2', light: '#7A55D6' },
+  LOW: { dark: '#6FC3CF', light: '#1F8A9A' },
+};
+
 const priorityLevel: Record<TaskPriority, number> = { LOW: 1, MEDIUM: 2, HIGH: 3 };
 const priorityLabel: Record<TaskPriority, string> = { LOW: 'Low', MEDIUM: 'Medium', HIGH: 'High' };
-const tapeColor: Record<TaskPriority, string> = { LOW: '#7FA2F5', MEDIUM: '#F2B533', HIGH: '#F07878' };
 
 const radii = [
   '26px 30px 24px 32px',
@@ -27,7 +32,7 @@ const radii = [
   '24px 32px 26px 30px',
   '32px 26px 30px 24px',
 ];
-const tilts = [-0.5, 0.4, -0.2, 0.6, -0.4];
+const stampTilt = [-1.5, 1, -0.5, 1.5, -1];
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
@@ -97,24 +102,19 @@ const Doodle: React.FC<{ kind: TaskStatus; className?: string }> = ({ kind, clas
   </svg>
 );
 
-const Scribble: React.FC<{ kind: 'star' | 'loop' | 'wave'; className?: string; style?: React.CSSProperties }> = ({ kind, className, style }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" className={className} style={style} aria-hidden="true">
-    {kind === 'star' && <path d="M12 2l2.4 6.8 7.1.3-5.6 4.4 2 6.9L12 16.4 6.1 20.4l2-6.9L2.5 9.1l7.1-.3L12 2Z" />}
-    {kind === 'loop' && <path d="M4 14c0-6 7-9 11-5s-1 9-5 7-1-6 2-5" />}
-    {kind === 'wave' && <path d="M2 12c3-6 5 6 8 0s5 6 8 0 4 6 4 0" />}
-  </svg>
-);
-
-const PriorityMark: React.FC<{ priority: TaskPriority; isDarkMode: boolean }> = ({ priority, isDarkMode }) => {
+const PriorityMark: React.FC<{ priority: TaskPriority; color: string; isDarkMode: boolean }> = ({ priority, color, isDarkMode }) => {
   const level = priorityLevel[priority];
-  const on = isDarkMode ? 'bg-[#E8ECF4]' : 'bg-[#14213D]';
-  const off = isDarkMode ? 'bg-[#2C3A56]' : 'bg-[#CBD3DF]';
+  const off = isDarkMode ? '#2C3A56' : '#CBD3DF';
 
   return (
-    <span className="inline-flex items-center gap-2 text-sm">
+    <span className="inline-flex items-center gap-2 text-sm font-medium" style={{ color }}>
       <span className="inline-flex items-end gap-[3px]" aria-hidden="true">
         {[1, 2, 3].map((bar) => (
-          <span key={bar} className={`w-[5px] rounded-[2px] ${bar <= level ? on : off}`} style={{ height: 6 + bar * 4 }} />
+          <span
+            key={bar}
+            className="w-[5px] rounded-[2px]"
+            style={{ height: 6 + bar * 4, background: bar <= level ? color : off }}
+          />
         ))}
       </span>
       {priorityLabel[priority]}
@@ -193,6 +193,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newId, setNewId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -214,8 +215,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
     setNewId(task._id);
   };
 
+  const toggleSelected = (id: string) => setSelectedId((current) => (current === id ? null : id));
+
   const countBy = (status: TaskStatus) => tasks.filter((task) => task.status === status).length;
   const accent = (status: TaskStatus) => (isDarkMode ? palette[status].dark : palette[status].light);
+  const priorityAccent = (priority: TaskPriority) => (isDarkMode ? priorityColor[priority].dark : priorityColor[priority].light);
 
   const openCount = countBy('PENDING') + countBy('IN_PROGRESS');
   const percent = tasks.length ? Math.round((countBy('COMPLETED') / tasks.length) * 100) : 0;
@@ -263,22 +267,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
 
   return (
     <div
-      className={`relative min-h-screen overflow-hidden transition-colors duration-300 ${t.page}`}
+      className={`min-h-screen transition-colors duration-300 ${t.page}`}
       style={{ fontFamily: "'Bricolage Grotesque', system-ui, sans-serif" }}
     >
       <style>{`
         @keyframes popIn {
-          0% { opacity: 0; transform: translateY(22px) scale(0.94) rotate(var(--tilt, 0deg)); }
-          70% { opacity: 1; transform: translateY(-3px) scale(1.01) rotate(var(--tilt, 0deg)); }
-          100% { opacity: 1; transform: translateY(0) scale(1) rotate(var(--tilt, 0deg)); }
+          0% { opacity: 0; transform: translateY(22px) scale(0.94); }
+          70% { opacity: 1; transform: translateY(-3px) scale(1.01); }
+          100% { opacity: 1; transform: none; }
         }
         @keyframes stampIn {
           from { opacity: 0; transform: scale(1.5) rotate(var(--tilt)); }
           to { opacity: 1; transform: scale(1) rotate(var(--tilt)); }
-        }
-        @keyframes floaty {
-          0%, 100% { transform: translateY(0) rotate(0deg); }
-          50% { transform: translateY(-16px) rotate(8deg); }
         }
         @keyframes drawLine { to { stroke-dashoffset: 0; } }
         @keyframes glow {
@@ -287,10 +287,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
         }
 
         .pop { animation: popIn 0.55s cubic-bezier(0.2, 0.9, 0.3, 1) backwards; }
-        .note { transform: rotate(var(--tilt)); transition: transform 0.25s ease; }
-        .note:hover { transform: rotate(0deg) translateY(-2px); }
         .fresh { animation: popIn 0.55s cubic-bezier(0.2, 0.9, 0.3, 1) backwards, glow 1.2s ease-out 2; }
-        .doodle { animation: floaty 9s ease-in-out infinite; }
         .squiggle { stroke-dasharray: 1; stroke-dashoffset: 1; animation: drawLine 0.9s 0.3s ease-out forwards; }
         .stamp {
           display: inline-block;
@@ -306,16 +303,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .pop, .fresh, .doodle, .stamp { animation: none; }
+          .pop, .fresh, .stamp { animation: none; }
           .squiggle { animation: none; stroke-dashoffset: 0; }
         }
       `}</style>
 
-      <Scribble kind="star" className="doodle pointer-events-none absolute left-[4%] top-[26%] hidden h-20 w-20 text-[#F2B533] opacity-30 md:block" />
-      <Scribble kind="loop" className="doodle pointer-events-none absolute right-[5%] top-[44%] hidden h-24 w-24 text-[#7FA2F5] opacity-30 md:block" style={{ animationDelay: '-3s' }} />
-      <Scribble kind="wave" className="doodle pointer-events-none absolute bottom-[10%] left-[8%] hidden h-20 w-20 text-[#5CC49A] opacity-30 md:block" style={{ animationDelay: '-6s' }} />
-
-      <header className="relative z-10 border-b" style={{ borderColor: t.border }}>
+      <header className="border-b" style={{ borderColor: t.border }}>
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2.5">
             <svg viewBox="0 0 24 24" className="h-8 w-8 text-[#F2B533]" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -342,7 +335,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-5xl space-y-8 px-6 pb-24 pt-10">
+      <main className="mx-auto max-w-5xl space-y-8 px-6 pb-24 pt-10">
         <section
           className="pop flex flex-wrap items-center justify-between gap-8 border p-7"
           style={{ background: t.surface, borderColor: t.border, borderRadius: '32px 28px 34px 26px' }}
@@ -391,7 +384,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
           </div>
 
           {error && (
-            <div className="border p-6" style={{ background: '#F0787814', borderColor: '#F0787855', borderRadius: radii[1] }}>
+            <div className="border p-6" style={{ background: '#F0787814', borderColor: '#F0787855', borderRadius: 20 }}>
               <p className={`font-medium ${t.danger}`}>Couldn’t load your tasks: {error}</p>
               <p className={`mt-1 text-sm ${t.muted}`}>Check that the API is running, then reload the page.</p>
             </div>
@@ -400,69 +393,87 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
           {isLoading && <p className={t.muted}>Loading tasks…</p>}
 
           {!isLoading && !error && tasks.length === 0 && (
-            <div className="flex flex-col items-center border border-dashed px-6 py-14 text-center" style={{ borderColor: t.border, borderRadius: radii[0] }}>
-              <Scribble kind="star" className="doodle mb-3 h-14 w-14 text-[#F2B533]" />
+            <div className="flex flex-col items-center border border-dashed px-6 py-14 text-center" style={{ borderColor: t.border, borderRadius: 20 }}>
+              <Inbox className={`mb-3 h-10 w-10 ${t.muted}`} />
               <p className="text-xl font-medium">Nothing here yet</p>
               <p className={`mt-1 ${t.muted}`}>Press New task to add the first one.</p>
             </div>
           )}
 
           {!isLoading && !error && tasks.length > 0 && (
-            <ul className="space-y-4">
+            <ul className="space-y-3">
               {tasks.map((task, index) => {
-                const color = accent(task.status);
+                const statusColor = accent(task.status);
+                const color = priorityAccent(task.priority);
+                const isSelected = selectedId === task._id;
                 const overdue = !!task.dueDate && task.status !== 'COMPLETED' && new Date(task.dueDate) < startOfToday;
-                const tilt = tilts[index % tilts.length];
 
                 return (
-                  <li
-                    key={task._id}
-                    className={`note pop relative flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border p-5 ${task._id === newId ? 'fresh' : ''}`}
-                    style={
-                      {
-                        background: t.surface,
-                        borderColor: t.border,
-                        borderRadius: radii[index % radii.length],
-                        '--tilt': `${tilt}deg`,
+                  <li key={task._id}>
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={isSelected}
+                      onClick={() => toggleSelected(task._id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          toggleSelected(task._id);
+                        }
+                      }}
+                      className={`pop relative cursor-pointer overflow-hidden border py-5 pl-7 pr-5 outline-none transition-[box-shadow,border-color,background-color] duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F2A900] ${
+                        task._id === newId ? 'fresh' : ''
+                      }`}
+                      style={{
+                        background: isSelected ? `${color}12` : t.surface,
+                        borderColor: isSelected ? color : t.border,
+                        borderRadius: 20,
+                        boxShadow: isSelected ? `0 0 0 1px ${color}, 0 0 26px ${color}45` : 'none',
                         animationDelay: `${400 + index * 70}ms`,
-                      } as React.CSSProperties
-                    }
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="absolute -top-2 left-8 h-4 w-14 rounded-sm"
-                      style={{ background: `${tapeColor[task.priority]}66`, transform: 'rotate(-4deg)' }}
-                    />
+                      }}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-y-0 left-0 w-[5px]"
+                        style={{ background: color, opacity: 0.85 }}
+                      />
 
-                    <div className="min-w-0 flex-1 basis-60">
-                      <p dir="auto" className="truncate text-lg font-medium">{task.title}</p>
-                      {task.description && (
-                        <p dir="auto" className={`mt-0.5 truncate text-sm ${t.muted}`}>{task.description}</p>
-                      )}
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-3">
+                        <div className="min-w-0">
+                          <p dir="auto" style={{ textAlign: 'left' }} className="truncate text-lg font-medium">
+                            {task.title}
+                          </p>
+                          {task.description && (
+                            <p dir="auto" style={{ textAlign: 'left' }} className={`mt-0.5 truncate text-sm ${t.muted}`}>
+                              {task.description}
+                            </p>
+                          )}
+                        </div>
 
-                      <div className="mt-3 flex flex-wrap items-center gap-3">
-                        <PriorityMark priority={task.priority} isDarkMode={isDarkMode} />
                         <span
-                          className={`rounded-full px-2.5 py-0.5 text-xs ${overdue ? `font-medium ${t.danger}` : t.muted}`}
-                          style={{ background: overdue ? '#F0787826' : isDarkMode ? '#FFFFFF10' : '#14213D0F' }}
+                          className="stamp mt-0.5 justify-self-end"
+                          style={
+                            {
+                              color: statusColor,
+                              '--tilt': `${stampTilt[index % stampTilt.length]}deg`,
+                              animationDelay: `${600 + index * 70}ms`,
+                            } as React.CSSProperties
+                          }
                         >
-                          {task.dueDate ? `${overdue ? 'Overdue, ' : 'Due '}${formatDate(task.dueDate)}` : 'No due date'}
+                          {palette[task.status].label}
                         </span>
+
+                        <div className="col-span-2 flex flex-wrap items-center gap-3">
+                          <PriorityMark priority={task.priority} color={color} isDarkMode={isDarkMode} />
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-xs ${overdue ? `font-medium ${t.danger}` : t.muted}`}
+                            style={{ background: overdue ? '#F0787826' : isDarkMode ? '#FFFFFF10' : '#14213D0F' }}
+                          >
+                            {task.dueDate ? `${overdue ? 'Overdue, ' : 'Due '}${formatDate(task.dueDate)}` : 'No due date'}
+                          </span>
+                        </div>
                       </div>
                     </div>
-
-                    <span
-                      className="stamp"
-                      style={
-                        {
-                          color,
-                          '--tilt': `${[-1.5, 1, -0.5, 1.5, -1][index % 5]}deg`,
-                          animationDelay: `${600 + index * 70}ms`,
-                        } as React.CSSProperties
-                      }
-                    >
-                      {palette[task.status].label}
-                    </span>
                   </li>
                 );
               })}
