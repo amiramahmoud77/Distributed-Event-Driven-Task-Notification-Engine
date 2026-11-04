@@ -1,20 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Sun,
-  Moon,
-  LogOut,
-  Activity,
-  Clock,
-  Loader2,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  Inbox,
-  Plus,
-} from 'lucide-react';
+import { Sun, Moon, LogOut, Plus } from 'lucide-react';
 import { api } from '../api';
 import { CreateTaskModal } from './CreateTaskModal';
-import type { Task, TaskStatus } from '../types';
+import type { Task, TaskPriority, TaskStatus } from '../types';
 
 interface DashboardProps {
   onLogout: () => void;
@@ -22,17 +10,39 @@ interface DashboardProps {
   setIsDarkMode: (val: boolean) => void;
 }
 
-const statusConfig: Record<TaskStatus, { label: string; icon: React.ElementType; style: string }> = {
-  PENDING: { label: 'Pending', icon: Clock, style: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
-  IN_PROGRESS: { label: 'In Progress', icon: Loader2, style: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
-  COMPLETED: { label: 'Completed', icon: CheckCircle2, style: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
-  FAILED: { label: 'Failed', icon: XCircle, style: 'bg-red-500/10 text-red-500 border-red-500/20' },
+const statusConfig: Record<TaskStatus, { label: string; light: string; dark: string }> = {
+  PENDING: { label: 'Pending', light: 'text-[#9A6700]', dark: 'text-[#F2B533]' },
+  IN_PROGRESS: { label: 'In progress', light: 'text-[#2B50AA]', dark: 'text-[#7FA2F5]' },
+  COMPLETED: { label: 'Completed', light: 'text-[#2E7D5B]', dark: 'text-[#5CC49A]' },
+  FAILED: { label: 'Failed', light: 'text-[#C23B3B]', dark: 'text-[#F07878]' },
 };
 
-const priorityStyle: Record<string, string> = {
-  LOW: 'text-zinc-400',
-  MEDIUM: 'text-amber-500',
-  HIGH: 'text-red-500',
+const priorityLevel: Record<TaskPriority, number> = { LOW: 1, MEDIUM: 2, HIGH: 3 };
+const priorityLabel: Record<TaskPriority, string> = { LOW: 'Low', MEDIUM: 'Medium', HIGH: 'High' };
+const stampTilt = [-1.5, 1, -0.5, 1.5, -1];
+
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+
+const PriorityMark: React.FC<{ priority: TaskPriority; isDarkMode: boolean }> = ({ priority, isDarkMode }) => {
+  const level = priorityLevel[priority];
+  const on = isDarkMode ? 'bg-[#E8ECF4]' : 'bg-[#14213D]';
+  const off = isDarkMode ? 'bg-[#26324A]' : 'bg-[#CBD3DF]';
+
+  return (
+    <span className="inline-flex items-center gap-2 text-sm">
+      <span className="inline-flex items-end gap-[3px]" aria-hidden="true">
+        {[1, 2, 3].map((bar) => (
+          <span
+            key={bar}
+            className={`w-[5px] rounded-[1px] ${bar <= level ? on : off}`}
+            style={{ height: 6 + bar * 4 }}
+          />
+        ))}
+      </span>
+      {priorityLabel[priority]}
+    </span>
+  );
 };
 
 export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setIsDarkMode }) => {
@@ -40,6 +50,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newId, setNewId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -58,178 +69,216 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
 
   const handleCreated = (task: Task) => {
     setTasks((prev) => [task, ...prev]);
+    setNewId(task._id);
   };
 
   const countBy = (status: TaskStatus) => tasks.filter((task) => task.status === status).length;
 
-  const card = isDarkMode
-    ? 'bg-zinc-900/60 border-zinc-800 backdrop-blur-xl'
-    : 'bg-white/80 border-slate-200 shadow-sm backdrop-blur-xl';
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
 
-  const stats = [
-    { label: 'Pending', value: countBy('PENDING'), icon: Clock, color: 'text-amber-500', glow: 'bg-amber-500/10' },
-    { label: 'In Progress', value: countBy('IN_PROGRESS'), icon: Loader2, color: 'text-indigo-400', glow: 'bg-indigo-500/10' },
-    { label: 'Completed', value: countBy('COMPLETED'), icon: CheckCircle2, color: 'text-emerald-500', glow: 'bg-emerald-500/10' },
-  ];
+  const todayLabel = new Date().toLocaleDateString('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+
+  const t = isDarkMode
+    ? {
+        page: 'bg-[#101826] text-[#E8ECF4]',
+        strong: 'text-[#E8ECF4]',
+        muted: 'text-[#8B96AB]',
+        line: 'border-[#26324A]',
+        danger: 'text-[#F07878]',
+        btn: 'bg-[#E8ECF4] text-[#101826] hover:bg-white',
+        ghost: 'text-[#8B96AB] hover:text-[#E8ECF4]',
+      }
+    : {
+        page: 'bg-[#EEF2F6] text-[#14213D]',
+        strong: 'text-[#14213D]',
+        muted: 'text-[#5B6578]',
+        line: 'border-[#CBD3DF]',
+        danger: 'text-[#C23B3B]',
+        btn: 'bg-[#14213D] text-[#EEF2F6] hover:bg-[#1f3159]',
+        ghost: 'text-[#5B6578] hover:text-[#14213D]',
+      };
+
+  const focus = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F2A900]';
+  const columns = 'md:grid md:grid-cols-[minmax(0,1fr)_110px_110px_120px]';
 
   return (
-    <div className={`relative min-h-screen overflow-hidden font-sans transition-colors duration-300 ${isDarkMode ? 'bg-zinc-950 text-zinc-100' : 'bg-slate-50 text-slate-800'}`}>
+    <div
+      className={`min-h-screen transition-colors duration-300 ${t.page}`}
+      style={{ fontFamily: "'Bricolage Grotesque', system-ui, sans-serif" }}
+    >
       <style>{`
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-        @keyframes float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(30px, -30px); } }
-        .fade-up { animation: fadeUp 0.55s ease both; }
-        .blob { animation: float 14s ease-in-out infinite; }
-        @media (prefers-reduced-motion: reduce) { .fade-up, .blob { animation: none; } }
+        @keyframes stampIn {
+          from { opacity: 0; transform: scale(1.4) rotate(var(--tilt)); }
+          to { opacity: 1; transform: scale(1) rotate(var(--tilt)); }
+        }
+        @keyframes flashRow {
+          from { background-color: rgba(242, 169, 0, 0.3); }
+          to { background-color: transparent; }
+        }
+        .stamp {
+          display: inline-block;
+          padding: 2px 10px;
+          border: 1.5px solid currentColor;
+          outline: 1px solid currentColor;
+          outline-offset: 2px;
+          border-radius: 4px;
+          font-size: 13px;
+          font-weight: 600;
+          transform: rotate(var(--tilt));
+          animation: stampIn 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+        }
+        .row-flash { animation: flashRow 1.8s ease-out; }
+        @media (prefers-reduced-motion: reduce) { .stamp, .row-flash { animation: none; } }
       `}</style>
 
-      <div className="blob pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-indigo-500/20 blur-3xl" />
-      <div className="blob pointer-events-none absolute top-1/3 -right-32 h-96 w-96 rounded-full bg-violet-500/20 blur-3xl" style={{ animationDelay: '-7s' }} />
+      <header className={`border-b ${t.line}`}>
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
+          <span className="text-lg font-semibold tracking-tight">Task Engine</span>
 
-      <header className={`relative z-10 flex items-center justify-between border-b px-8 py-4 backdrop-blur-xl ${isDarkMode ? 'border-zinc-800 bg-zinc-900/50' : 'border-slate-200 bg-white/70'}`}>
-        <div className="flex items-center space-x-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 font-bold text-white shadow-lg shadow-indigo-500/30">
-            TE
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              className={`rounded-md p-2 ${t.ghost} ${focus}`}
+            >
+              {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </button>
+
+            <button
+              onClick={onLogout}
+              className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium ${t.ghost} ${focus}`}
+            >
+              <LogOut className="h-4 w-4" />
+              Log out
+            </button>
           </div>
-          <span className="text-xl font-bold tracking-tight">Task Engine</span>
-        </div>
-
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className={`rounded-xl border p-2.5 transition-all duration-200 hover:scale-105 ${isDarkMode ? 'border-zinc-800 bg-zinc-900 text-amber-400' : 'border-slate-200 bg-white text-slate-700'}`}
-          >
-            {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          </button>
-
-          <button
-            onClick={onLogout}
-            className="flex items-center space-x-2 rounded-xl bg-red-500/10 px-4 py-2 text-sm font-medium text-red-500 transition-all duration-200 hover:scale-105 hover:bg-red-500/20"
-          >
-            <LogOut className="h-4 w-4" />
-            <span>Logout</span>
-          </button>
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-7xl space-y-8 p-8">
-        <div className="fade-up flex items-end justify-between">
+      <main className="mx-auto max-w-4xl px-6 pb-24 pt-12">
+        <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight">Overview</h1>
-            <p className={`mt-1 text-sm ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
-              Live view of your tasks and pipeline status.
+            <h1
+              className="text-[40px] font-semibold leading-[1.05] tracking-[-0.02em] sm:text-5xl"
+              style={{ fontVariationSettings: "'wdth' 85" }}
+            >
+              {todayLabel}
+            </h1>
+
+            <p className={`mt-3 text-lg ${t.muted}`}>
+              {isLoading || error ? (
+                'Your tasks'
+              ) : tasks.length === 0 ? (
+                'Nothing queued yet.'
+              ) : (
+                <>
+                  <strong className={`font-semibold tabular-nums ${t.strong}`}>{countBy('PENDING')}</strong> pending,{' '}
+                  <strong className={`font-semibold tabular-nums ${t.strong}`}>{countBy('IN_PROGRESS')}</strong> in progress,{' '}
+                  <strong className={`font-semibold tabular-nums ${t.strong}`}>{countBy('COMPLETED')}</strong> completed
+                  {countBy('FAILED') > 0 && (
+                    <>
+                      , <strong className={`font-semibold tabular-nums ${t.strong}`}>{countBy('FAILED')}</strong> failed
+                    </>
+                  )}
+                  .
+                </>
+              )}
             </p>
           </div>
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center space-x-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/25 transition-all hover:scale-105 hover:bg-indigo-500"
+            className={`flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors ${t.btn} ${focus}`}
           >
             <Plus className="h-4 w-4" />
-            <span>New Task</span>
+            New task
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <div className={`fade-up rounded-2xl border p-6 transition-all duration-300 hover:-translate-y-1 ${card}`} style={{ animationDelay: '60ms' }}>
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-sm font-medium text-zinc-400">System Status</span>
-              <div className="rounded-lg bg-emerald-500/10 p-2">
-                <Activity className="h-5 w-5 text-emerald-500" />
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
-              </span>
-              <h3 className="text-2xl font-bold">Operational</h3>
-            </div>
-            <p className="mt-1 text-xs text-zinc-500">All pipelines running smoothly</p>
-          </div>
-
-          {stats.map((stat, index) => (
-            <div
-              key={stat.label}
-              className={`fade-up rounded-2xl border p-6 transition-all duration-300 hover:-translate-y-1 ${card}`}
-              style={{ animationDelay: `${(index + 2) * 60}ms` }}
-            >
-              <div className="mb-4 flex items-center justify-between">
-                <span className="text-sm font-medium text-zinc-400">{stat.label}</span>
-                <div className={`rounded-lg p-2 ${stat.glow}`}>
-                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                </div>
-              </div>
-              {isLoading ? (
-                <div className={`h-8 w-16 animate-pulse rounded-lg ${isDarkMode ? 'bg-zinc-800' : 'bg-slate-200'}`} />
-              ) : (
-                <h3 className="text-3xl font-bold">{stat.value}</h3>
-              )}
-              <p className="mt-1 text-xs text-zinc-500">{error ?? 'tasks'}</p>
-            </div>
-          ))}
-        </div>
-
-        <section className={`fade-up rounded-2xl border ${card}`} style={{ animationDelay: '300ms' }}>
-          <div className={`flex items-center justify-between border-b px-6 py-4 ${isDarkMode ? 'border-zinc-800' : 'border-slate-200'}`}>
-            <h2 className="text-lg font-semibold">Recent Tasks</h2>
-            {!isLoading && !error && (
-              <span className="text-xs text-zinc-500">{tasks.length} total</span>
-            )}
-          </div>
-
+        <section className="mt-12">
           {error && (
-            <div className="m-6 flex items-center space-x-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3.5 text-sm text-red-500">
-              <AlertCircle className="h-5 w-5 flex-shrink-0" />
-              <span>{error}</span>
+            <div className="py-10">
+              <p className={`font-medium ${t.danger}`}>Couldn’t load your tasks: {error}</p>
+              <p className={`mt-1 text-sm ${t.muted}`}>Check that the API is running, then reload the page.</p>
             </div>
           )}
 
-          {isLoading && (
-            <div className="space-y-3 p-6">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className={`h-14 animate-pulse rounded-xl ${isDarkMode ? 'bg-zinc-800/70' : 'bg-slate-200/70'}`} />
-              ))}
-            </div>
-          )}
+          {isLoading && <p className={`py-10 ${t.muted}`}>Loading tasks…</p>}
 
           {!isLoading && !error && tasks.length === 0 && (
-            <div className="flex flex-col items-center px-6 py-16 text-center">
-              <div className={`mb-4 rounded-2xl p-4 ${isDarkMode ? 'bg-zinc-800' : 'bg-slate-100'}`}>
-                <Inbox className="h-8 w-8 text-zinc-500" />
-              </div>
-              <p className="font-medium">No tasks yet</p>
-              <p className="mt-1 text-sm text-zinc-500">Tasks you create will show up here.</p>
+            <div className="py-10">
+              <p className="text-xl font-medium">No tasks yet</p>
+              <p className={`mt-1 ${t.muted}`}>Use New task to add your first one. It will show up here with its status.</p>
             </div>
           )}
 
           {!isLoading && !error && tasks.length > 0 && (
-            <ul className={`divide-y ${isDarkMode ? 'divide-zinc-800' : 'divide-slate-200'}`}>
-              {tasks.map((task, index) => {
-                const status = statusConfig[task.status];
-                const StatusIcon = status.icon;
-                return (
-                  <li
-                    key={task._id}
-                    className={`fade-up flex items-center justify-between px-6 py-4 transition-colors ${isDarkMode ? 'hover:bg-zinc-800/40' : 'hover:bg-slate-50'}`}
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{task.title}</p>
-                      <p className="mt-0.5 text-xs text-zinc-500">
-                        <span className={priorityStyle[task.priority]}>{task.priority}</span>
-                        {' · '}
-                        {new Date(task.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
+            <>
+              <div className={`hidden border-b pb-2 text-sm ${columns} ${t.line} ${t.muted}`}>
+                <span>Task</span>
+                <span>Priority</span>
+                <span>Due</span>
+                <span className="justify-self-end">Status</span>
+              </div>
 
-                    <span className={`ml-4 inline-flex flex-shrink-0 items-center space-x-1.5 rounded-full border px-3 py-1 text-xs font-medium ${status.style}`}>
-                      <StatusIcon className="h-3.5 w-3.5" />
-                      <span>{status.label}</span>
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
+              <ul>
+                {tasks.map((task, index) => {
+                  const status = statusConfig[task.status];
+                  const overdue =
+                    !!task.dueDate && task.status !== 'COMPLETED' && new Date(task.dueDate) < startOfToday;
+
+                  return (
+                    <li
+                      key={task._id}
+                      className={`flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-dashed py-4 ${columns} ${t.line} ${
+                        task._id === newId ? 'row-flash' : ''
+                      }`}
+                    >
+                      <div className="min-w-0 basis-full md:basis-auto">
+                        <p className="truncate text-[17px] font-medium">{task.title}</p>
+                        {task.description && (
+                          <p className={`mt-0.5 truncate text-sm ${t.muted}`}>{task.description}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <PriorityMark priority={task.priority} isDarkMode={isDarkMode} />
+                      </div>
+
+                      <div className="text-sm">
+                        {task.dueDate ? (
+                          <span className={overdue ? `font-medium ${t.danger}` : ''}>
+                            {overdue ? 'Overdue ' : ''}
+                            {formatDate(task.dueDate)}
+                          </span>
+                        ) : (
+                          <span className={t.muted}>No date</span>
+                        )}
+                      </div>
+
+                      <div className="px-1 md:justify-self-end">
+                        <span
+                          className={`stamp ${isDarkMode ? status.dark : status.light}`}
+                          style={
+                            {
+                              '--tilt': `${stampTilt[index % stampTilt.length]}deg`,
+                              animationDelay: `${index * 70}ms`,
+                            } as React.CSSProperties
+                          }
+                        >
+                          {status.label}
+                        </span>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
           )}
         </section>
       </main>
