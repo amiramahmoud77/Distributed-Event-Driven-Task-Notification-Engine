@@ -1,4 +1,4 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 
 export enum TaskStatus {
   PENDING = 'PENDING',
@@ -18,6 +18,7 @@ export interface ITask extends Document {
   description?: string;
   status: TaskStatus;
   priority: TaskPriority;
+  userId: Types.ObjectId;
   dueDate?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -43,6 +44,12 @@ const taskSchema = new Schema<ITask>(
       type: String,
       enum: Object.values(TaskPriority),
       default: TaskPriority.MEDIUM,
+    },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
     },
     dueDate: {
       type: Date,
