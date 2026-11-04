@@ -10,8 +10,10 @@ import {
   XCircle,
   AlertCircle,
   Inbox,
+  Plus,
 } from 'lucide-react';
 import { api } from '../api';
+import { CreateTaskModal } from './CreateTaskModal';
 import type { Task, TaskStatus } from '../types';
 
 interface DashboardProps {
@@ -37,6 +39,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -52,6 +55,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
 
     loadTasks();
   }, []);
+
+  const handleCreated = (task: Task) => {
+    setTasks((prev) => [task, ...prev]);
+  };
 
   const countBy = (status: TaskStatus) => tasks.filter((task) => task.status === status).length;
 
@@ -105,11 +112,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
       </header>
 
       <main className="relative z-10 mx-auto max-w-7xl space-y-8 p-8">
-        <div className="fade-up">
-          <h1 className="text-3xl font-extrabold tracking-tight">Overview</h1>
-          <p className={`mt-1 text-sm ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
-            Live view of your tasks and pipeline status.
-          </p>
+        <div className="fade-up flex items-end justify-between">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight">Overview</h1>
+            <p className={`mt-1 text-sm ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
+              Live view of your tasks and pipeline status.
+            </p>
+          </div>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center space-x-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/25 transition-all hover:scale-105 hover:bg-indigo-500"
+          >
+            <Plus className="h-4 w-4" />
+            <span>New Task</span>
+          </button>
         </div>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -216,6 +233,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
           )}
         </section>
       </main>
+
+      {isModalOpen && (
+        <CreateTaskModal
+          isDarkMode={isDarkMode}
+          onClose={() => setIsModalOpen(false)}
+          onCreated={handleCreated}
+        />
+      )}
     </div>
   );
 };
