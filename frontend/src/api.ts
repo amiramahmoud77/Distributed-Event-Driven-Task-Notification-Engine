@@ -10,10 +10,16 @@ export async function api(path: string, options: RequestInit = {}) {
     },
   });
 
-  const data = await response.json();
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+
+  if (response.status === 401 && token) {
+    localStorage.removeItem('token');
+    window.location.reload();
+  }
 
   if (!response.ok) {
-    throw new Error(data.message || 'Request failed');
+    throw new Error(data?.message || `Server unreachable (status ${response.status})`);
   }
 
   return data;
