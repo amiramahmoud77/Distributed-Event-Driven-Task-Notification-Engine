@@ -32,7 +32,6 @@ const radii = [
   '24px 32px 26px 30px',
   '32px 26px 30px 24px',
 ];
-const stampTilt = [-1.5, 1, -0.5, 1.5, -1];
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
@@ -276,9 +275,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
           70% { opacity: 1; transform: translateY(-3px) scale(1.01); }
           100% { opacity: 1; transform: none; }
         }
-        @keyframes stampIn {
-          from { opacity: 0; transform: scale(1.5) rotate(var(--tilt)); }
-          to { opacity: 1; transform: scale(1) rotate(var(--tilt)); }
+        @keyframes badgeIn {
+          from { opacity: 0; transform: scale(0.85); }
+          to { opacity: 1; transform: scale(1); }
         }
         @keyframes drawLine { to { stroke-dashoffset: 0; } }
         @keyframes glow {
@@ -289,21 +288,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
         .pop { animation: popIn 0.55s cubic-bezier(0.2, 0.9, 0.3, 1) backwards; }
         .fresh { animation: popIn 0.55s cubic-bezier(0.2, 0.9, 0.3, 1) backwards, glow 1.2s ease-out 2; }
         .squiggle { stroke-dasharray: 1; stroke-dashoffset: 1; animation: drawLine 0.9s 0.3s ease-out forwards; }
-        .stamp {
-          display: inline-block;
-          padding: 2px 10px;
-          border: 1.5px solid currentColor;
-          outline: 1px solid currentColor;
-          outline-offset: 2px;
-          border-radius: 4px;
-          font-size: 13px;
-          font-weight: 600;
-          transform: rotate(var(--tilt));
-          animation: stampIn 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
-        }
+        .badge { animation: badgeIn 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
 
         @media (prefers-reduced-motion: reduce) {
-          .pop, .fresh, .stamp { animation: none; }
+          .pop, .fresh, .badge { animation: none; }
           .squiggle { animation: none; stroke-dashoffset: 0; }
         }
       `}</style>
@@ -451,15 +439,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
                         </div>
 
                         <span
-                          className="stamp mt-0.5 justify-self-end"
-                          style={
-                            {
-                              color: statusColor,
-                              '--tilt': `${stampTilt[index % stampTilt.length]}deg`,
-                              animationDelay: `${600 + index * 70}ms`,
-                            } as React.CSSProperties
-                          }
+                          className="badge inline-flex h-7 items-center gap-1.5 justify-self-end rounded-full px-3 text-[13px] font-semibold"
+                          style={{
+                            color: statusColor,
+                            background: `${statusColor}1F`,
+                            border: `1px solid ${statusColor}55`,
+                            animationDelay: `${600 + index * 70}ms`,
+                          }}
                         >
+                          <Doodle kind={task.status} className="h-3.5 w-3.5" />
                           {palette[task.status].label}
                         </span>
 
