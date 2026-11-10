@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Sun, Moon, LogOut, Plus, Inbox } from 'lucide-react';
+import { Sun, Moon, LogOut, Plus, Inbox, ArrowRight } from 'lucide-react';
 import { api } from '../api';
 import { CreateTaskModal } from './CreateTaskModal';
 import type { Task, TaskPriority, TaskStatus } from '../types';
@@ -422,6 +422,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
                 const color = priorityAccent(task.priority);
                 const isSelected = selectedId === task._id;
                 const overdue = !!task.dueDate && task.status !== 'COMPLETED' && new Date(task.dueDate) < startOfToday;
+                const upcoming = nextStatus[task.status];
 
                 return (
                   <li key={task._id}>
@@ -486,6 +487,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
                           >
                             {task.dueDate ? `${overdue ? 'Overdue, ' : 'Due '}${formatDate(task.dueDate)}` : 'No due date'}
                           </span>
+
+                          {upcoming && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStatusChange(task, upcoming);
+                              }}
+                              onKeyDown={(e) => e.stopPropagation()}
+                              className={`ml-auto inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-[filter] hover:brightness-125 ${focus}`}
+                              style={{
+                                color: accent(upcoming),
+                                background: `${accent(upcoming)}1F`,
+                                border: `1px solid ${accent(upcoming)}55`,
+                              }}
+                            >
+                              {nextAction[task.status]}
+                              <ArrowRight className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
