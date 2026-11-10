@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Sun, Moon, LogOut, Plus, Inbox } from 'lucide-react';
+import { Sun, Moon, LogOut, Plus, Inbox, ArrowRight } from 'lucide-react';
 import { api } from '../api';
 import { CreateTaskModal } from './CreateTaskModal';
 import type { Task, TaskPriority, TaskStatus } from '../types';
@@ -35,6 +35,16 @@ const radii = [
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+
+const nextStatus: Partial<Record<TaskStatus, TaskStatus>> = {
+  PENDING: 'IN_PROGRESS',
+  IN_PROGRESS: 'COMPLETED',
+};
+
+const nextAction: Partial<Record<TaskStatus, string>> = {
+  PENDING: 'Start',
+  IN_PROGRESS: 'Complete',
+};
 
 const useCountUp = (target: number, duration = 900) => {
   const [value, setValue] = useState(0);
@@ -193,6 +203,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newId, setNewId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -212,6 +223,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
   const handleCreated = (task: Task) => {
     setTasks((prev) => [task, ...prev]);
     setNewId(task._id);
+  };
+
+  const handleStatusChange = async (task: Task, status: TaskStatus) => {
+    const snapshot = tasks;
+    setActionError(null);
+    setTasks((prev) => prev.map((item) => (item._id === task._id ? { ...item, status } : item)));
+
+    try {
+      await api(`/api/tasks/${task._id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
+    } catch (err: any) {
+      setTasks(snapshot);
+      setActionError(`Couldn’t update “${task.title}”. ${err.message}`);
+    }
   };
 
   const toggleSelected = (id: string) => setSelectedId((current) => (current === id ? null : id));
@@ -371,6 +398,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
             {!isLoading && !error && <span className={`text-sm ${t.muted}`}>{tasks.length} in total</span>}
           </div>
 
+          {actionError && (
+            <div
+              role="alert"
+              className="mb-4 flex items-start justify-between gap-4 border p-4"
+              style={{ background: '#F0787814', borderColor: '#F0787855', borderRadius: 16 }}
+            >
+              <p className={`text-sm font-medium ${t.danger}`}>{actionError}</p>
+              <button
+                type="button"
+                onClick={() => setActionError(null)}
+                className={`flex-shrink-0 text-sm font-medium ${t.ghost} ${focus}`}
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+
           {error && (
             <div className="border p-6" style={{ background: '#F0787814', borderColor: '#F0787855', borderRadius: 20 }}>
               <p className={`font-medium ${t.danger}`}>Couldn’t load your tasks: {error}</p>
@@ -395,6 +439,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
                 const color = priorityAccent(task.priority);
                 const isSelected = selectedId === task._id;
                 const overdue = !!task.dueDate && task.status !== 'COMPLETED' && new Date(task.dueDate) < startOfToday;
+                const upcoming = nextStatus[task.status];
 
                 return (
                   <li key={task._id}>
@@ -459,6 +504,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
                           >
                             {task.dueDate ? `${overdue ? 'Overdue, ' : 'Due '}${formatDate(task.dueDate)}` : 'No due date'}
                           </span>
+
+                          {upcoming && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStatusChange(task, upcoming);
+                              }}
+                              onKeyDown={(e) => e.stopPropagation()}
+                              className={`ml-auto inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-[filter] hover:brightness-125 ${focus}`}
+                              style={{
+                                color: accent(upcoming),
+                                background: `${accent(upcoming)}1F`,
+                                border: `1px solid ${accent(upcoming)}55`,
+                              }}
+                            >
+                              {nextAction[task.status]}
+                              <ArrowRight className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
