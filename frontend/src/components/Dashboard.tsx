@@ -398,6 +398,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
             {!isLoading && !error && <span className={`text-sm ${t.muted}`}>{tasks.length} in total</span>}
           </div>
 
+          {actionError && (
+            <div
+              role="alert"
+              className="mb-4 flex items-start justify-between gap-4 border p-4"
+              style={{ background: '#F0787814', borderColor: '#F0787855', borderRadius: 16 }}
+            >
+              <p className={`text-sm font-medium ${t.danger}`}>{actionError}</p>
+              <button
+                type="button"
+                onClick={() => setActionError(null)}
+                className={`flex-shrink-0 text-sm font-medium ${t.ghost} ${focus}`}
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+
           {error && (
             <div className="border p-6" style={{ background: '#F0787814', borderColor: '#F0787855', borderRadius: 20 }}>
               <p className={`font-medium ${t.danger}`}>Couldn’t load your tasks: {error}</p>
