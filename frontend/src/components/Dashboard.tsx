@@ -36,6 +36,16 @@ const radii = [
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
+const nextStatus: Partial<Record<TaskStatus, TaskStatus>> = {
+  PENDING: 'IN_PROGRESS',
+  IN_PROGRESS: 'COMPLETED',
+};
+
+const nextAction: Partial<Record<TaskStatus, string>> = {
+  PENDING: 'Start',
+  IN_PROGRESS: 'Complete',
+};
+
 const useCountUp = (target: number, duration = 900) => {
   const [value, setValue] = useState(0);
   const previous = useRef(0);
@@ -193,6 +203,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newId, setNewId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -212,6 +223,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
   const handleCreated = (task: Task) => {
     setTasks((prev) => [task, ...prev]);
     setNewId(task._id);
+  };
+
+  const handleStatusChange = async (task: Task, status: TaskStatus) => {
+    const snapshot = tasks;
+    setActionError(null);
+    setTasks((prev) => prev.map((item) => (item._id === task._id ? { ...item, status } : item)));
+
+    try {
+      await api(`/api/tasks/${task._id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
+    } catch (err: any) {
+      setTasks(snapshot);
+      setActionError(`Couldn’t update “${task.title}”. ${err.message}`);
+    }
   };
 
   const toggleSelected = (id: string) => setSelectedId((current) => (current === id ? null : id));
