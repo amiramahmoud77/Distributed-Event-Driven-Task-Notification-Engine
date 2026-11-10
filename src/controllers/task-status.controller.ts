@@ -17,12 +17,20 @@ export const updateTaskStatus = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    const task = await Task.findByIdAndUpdate(
-      id,
+    // Admins can change any task; everyone else only their own.
+    const filter: any = { _id: id };
+    if (req.user?.role !== 'admin') {
+      filter.userId = req.user?.id;
+    }
+
+    const task = await Task.findOneAndUpdate(
+      filter,
       { status },
       { new: true, runValidators: true }
     );
 
+    // A task that belongs to someone else looks the same as a missing one,
+    // so ids cannot be probed.
     if (!task) {
       res.status(404).json({ success: false, message: 'Task not found' });
       return;
