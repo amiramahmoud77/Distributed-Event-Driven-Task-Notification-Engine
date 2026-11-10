@@ -148,7 +148,13 @@ export const updateTask = async (req: Request, res: Response): Promise<void> => 
 // Delete task
 export const deleteTask = async (req: Request, res: Response): Promise<void> => {
   try {
-    const task = await Task.findByIdAndDelete(req.params.id);
+    // Admins can delete any task; everyone else only their own.
+    const filter: any = { _id: req.params.id };
+    if (req.user?.role !== 'admin') {
+      filter.userId = req.user?.id;
+    }
+
+    const task = await Task.findOneAndDelete(filter);
 
     if (!task) {
       res.status(404).json({ success: false, message: 'Task not found' });
