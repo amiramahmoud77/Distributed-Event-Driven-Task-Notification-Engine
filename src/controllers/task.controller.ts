@@ -105,7 +105,22 @@ export const getTaskById = async (req: Request, res: Response): Promise<void> =>
 // Update task
 export const updateTask = async (req: Request, res: Response): Promise<void> => {
   try {
-    const task = await Task.findByIdAndUpdate(req.params.id, req.body, {
+    // Only these fields can be edited here. Status has its own endpoint,
+    // and userId must never be changed from the outside.
+    const { title, description, priority, dueDate } = req.body;
+    const updates: any = {};
+    if (title !== undefined) updates.title = title;
+    if (description !== undefined) updates.description = description;
+    if (priority !== undefined) updates.priority = priority;
+    if (dueDate !== undefined) updates.dueDate = dueDate;
+
+    // Admins can edit any task; everyone else only their own.
+    const filter: any = { _id: req.params.id };
+    if (req.user?.role !== 'admin') {
+      filter.userId = req.user?.id;
+    }
+
+    const task = await Task.findOneAndUpdate(filter, updates, {
       new: true,
       runValidators: true,
     });
