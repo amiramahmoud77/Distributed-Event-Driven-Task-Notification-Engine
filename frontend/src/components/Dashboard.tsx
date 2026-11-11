@@ -4,6 +4,9 @@ import { api } from '../api';
 import { CreateTaskModal } from './CreateTaskModal';
 import { palette, radii } from './dashboard/constants';
 import { CIRCLE } from './dashboard/Doodle';
+import { FilterBar } from './dashboard/FilterBar';
+import { filterTasks } from './dashboard/filters';
+import type { StatusFilter } from './dashboard/filters';
 import { ProgressRing } from './dashboard/ProgressRing';
 import { StatCard } from './dashboard/StatCard';
 import { TaskRow } from './dashboard/TaskRow';
@@ -23,6 +26,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
   const [newId, setNewId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<StatusFilter>('ALL');
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -40,6 +44,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
   }, []);
 
   const handleCreated = (task: Task) => {
+    // Show everything again, otherwise a new Pending task could be hidden by the filter.
+    setFilter('ALL');
     setTasks((prev) => [task, ...prev]);
     setNewId(task._id);
   };
@@ -61,6 +67,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
   };
 
   const toggleSelected = (id: string) => setSelectedId((current) => (current === id ? null : id));
+
+  const visibleTasks = filterTasks(tasks, filter);
 
   const countBy = (status: TaskStatus) => tasks.filter((task) => task.status === status).length;
   const accent = (status: TaskStatus) => (isDarkMode ? palette[status].dark : palette[status].light);
@@ -213,7 +221,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
         <section>
           <div className="mb-5 flex items-baseline justify-between">
             <h2 className="text-2xl font-semibold tracking-tight">Your tasks</h2>
-            {!isLoading && !error && <span className={`text-sm ${t.muted}`}>{tasks.length} in total</span>}
+            {!isLoading && !error && (
+              <span className={`text-sm ${t.muted}`}>
+                {filter === 'ALL' ? `${tasks.length} in total` : `${visibleTasks.length} of ${tasks.length}`}
+              </span>
+            )}
           </div>
 
           {actionError && (
@@ -251,26 +263,38 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
           )}
 
           {!isLoading && !error && tasks.length > 0 && (
-            <ul className="space-y-3">
-              {tasks.map((task, index) => (
-                <TaskRow
-                  key={task._id}
-                  task={task}
-                  index={index}
-                  isDarkMode={isDarkMode}
-                  isSelected={selectedId === task._id}
-                  isNew={task._id === newId}
-                  startOfToday={startOfToday}
-                  surface={t.surface}
-                  border={t.border}
-                  mutedClass={t.muted}
-                  dangerClass={t.danger}
-                  focus={focus}
-                  onToggle={toggleSelected}
-                  onStatusChange={handleStatusChange}
-                />
-              ))}
-            </ul>
+            <>
+              <FilterBar
+                value={filter}
+                onChange={setFilter}
+                tasks={tasks}
+                isDarkMode={isDarkMode}
+                borderColor={t.border}
+                mutedClass={t.muted}
+                focus={focus}
+              />
+
+              <ul className="space-y-3">
+                {visibleTasks.map((task, index) => (
+                  <TaskRow
+                    key={task._id}
+                    task={task}
+                    index={index}
+                    isDarkMode={isDarkMode}
+                    isSelected={selectedId === task._id}
+                    isNew={task._id === newId}
+                    startOfToday={startOfToday}
+                    surface={t.surface}
+                    border={t.border}
+                    mutedClass={t.muted}
+                    dangerClass={t.danger}
+                    focus={focus}
+                    onToggle={toggleSelected}
+                    onStatusChange={handleStatusChange}
+                  />
+                ))}
+              </ul>
+            </>
           )}
         </section>
       </main>
