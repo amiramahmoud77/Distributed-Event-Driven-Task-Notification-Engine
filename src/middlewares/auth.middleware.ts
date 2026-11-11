@@ -1,15 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey123';
+import { JWT_SECRET } from '../config/jwt';
 
 interface JwtPayload {
   id: string;
   role: string;
-  email?: string; 
+  email?: string;
 }
 
-// 1. Protection Middleware 
+// 1. Protection Middleware
 export const protect = (req: Request, res: Response, next: NextFunction): void => {
   let token: string | undefined;
 
@@ -24,11 +23,11 @@ export const protect = (req: Request, res: Response, next: NextFunction): void =
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-  
-    req.user = { 
-      id: decoded.id, 
-      role: decoded.role, 
-      email: decoded.email || '' 
+
+    req.user = {
+      id: decoded.id,
+      role: decoded.role,
+      email: decoded.email || '',
     };
     next();
   } catch (error) {
