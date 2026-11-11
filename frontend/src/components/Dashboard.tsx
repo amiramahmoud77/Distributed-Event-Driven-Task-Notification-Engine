@@ -7,12 +7,13 @@ import {
   nextStatus,
   palette,
   priorityColor,
-  priorityLabel,
-  priorityLevel,
   radii,
 } from './dashboard/constants';
+import { CIRCLE, Doodle } from './dashboard/Doodle';
 import { formatDate } from './dashboard/format';
-import { useCountUp } from './dashboard/useCountUp';
+import { PriorityMark } from './dashboard/PriorityMark';
+import { ProgressRing } from './dashboard/ProgressRing';
+import { StatCard } from './dashboard/StatCard';
 import type { Task, TaskPriority, TaskStatus } from '../types';
 
 interface DashboardProps {
@@ -20,122 +21,6 @@ interface DashboardProps {
   isDarkMode: boolean;
   setIsDarkMode: (val: boolean) => void;
 }
-
-const CIRCLE = 'M12 3.2c4.8-.3 8.9 3.6 8.8 8.5-.1 4.9-4 8.6-8.8 8.4-4.9-.2-8.5-4-8.3-8.8C3.9 6.9 7.5 3.4 12 3.2Z';
-
-const Doodle: React.FC<{ kind: TaskStatus; className?: string }> = ({ kind, className }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
-    {kind === 'PENDING' && (
-      <>
-        <path d={CIRCLE} />
-        <path d="M12 7.5v4.6l3 1.8" />
-      </>
-    )}
-    {kind === 'IN_PROGRESS' && (
-      <>
-        <path d="M20.2 12.4a8.2 8.2 0 1 1-2.7-6.3" />
-        <path d="M20.6 3.6v4.4h-4.4" />
-      </>
-    )}
-    {kind === 'COMPLETED' && (
-      <>
-        <path d={CIRCLE} />
-        <path d="M7.8 12.4l2.9 3 5.6-6.4" />
-      </>
-    )}
-    {kind === 'FAILED' && (
-      <>
-        <path d={CIRCLE} />
-        <path d="M9 9l6 6M15 9l-6 6" />
-      </>
-    )}
-  </svg>
-);
-
-const PriorityMark: React.FC<{ priority: TaskPriority; color: string; isDarkMode: boolean }> = ({ priority, color, isDarkMode }) => {
-  const level = priorityLevel[priority];
-  const off = isDarkMode ? '#2C3A56' : '#CBD3DF';
-
-  return (
-    <span className="inline-flex items-center gap-2 text-sm font-medium" style={{ color }}>
-      <span className="inline-flex items-end gap-[3px]" aria-hidden="true">
-        {[1, 2, 3].map((bar) => (
-          <span
-            key={bar}
-            className="w-[5px] rounded-[2px]"
-            style={{ height: 6 + bar * 4, background: bar <= level ? color : off }}
-          />
-        ))}
-      </span>
-      {priorityLabel[priority]}
-    </span>
-  );
-};
-
-interface StatCardProps {
-  status: TaskStatus;
-  value: number;
-  caption: string;
-  color: string;
-  radius: string;
-  delay: number;
-  loading: boolean;
-  mutedClass: string;
-}
-
-const StatCard: React.FC<StatCardProps> = ({ status, value, caption, color, radius, delay, loading, mutedClass }) => {
-  const shown = useCountUp(loading ? 0 : value);
-
-  return (
-    <div
-      className="pop p-5"
-      style={{
-        background: `${color}1F`,
-        border: `1.5px solid ${color}55`,
-        borderRadius: radius,
-        color,
-        animationDelay: `${delay}ms`,
-      }}
-    >
-      <div className="flex items-center justify-between">
-        <span className="text-base font-semibold">{palette[status].label}</span>
-        <Doodle kind={status} className="h-7 w-7 -rotate-6" />
-      </div>
-      <p className="mt-3 text-[52px] font-bold leading-none tabular-nums">{shown}</p>
-      <p className={`mt-2 text-sm ${mutedClass}`}>{caption}</p>
-    </div>
-  );
-};
-
-const ProgressRing: React.FC<{ percent: number; color: string; track: string; loading: boolean }> = ({ percent, color, track, loading }) => {
-  const radius = 48;
-  const circumference = 2 * Math.PI * radius;
-  const shown = useCountUp(loading ? 0 : percent, 1100);
-
-  return (
-    <div className="relative h-32 w-32 flex-shrink-0">
-      <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90" aria-hidden="true">
-        <circle cx="60" cy="60" r={radius} fill="none" stroke={track} strokeWidth="9" />
-        <circle
-          cx="60"
-          cy="60"
-          r={radius}
-          fill="none"
-          stroke={color}
-          strokeWidth="9"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={circumference * (1 - (loading ? 0 : percent) / 100)}
-          style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(0.3, 0.7, 0.2, 1)' }}
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-bold tabular-nums">{shown}%</span>
-        <span className="text-xs opacity-70">done</span>
-      </div>
-    </div>
-  );
-};
 
 export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setIsDarkMode }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
