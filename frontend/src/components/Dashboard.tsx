@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Sun, Moon, LogOut, Plus, Inbox, ArrowRight } from 'lucide-react';
 import { api } from '../api';
 import { CreateTaskModal } from './CreateTaskModal';
@@ -11,6 +11,8 @@ import {
   priorityLevel,
   radii,
 } from './dashboard/constants';
+import { formatDate } from './dashboard/format';
+import { useCountUp } from './dashboard/useCountUp';
 import type { Task, TaskPriority, TaskStatus } from '../types';
 
 interface DashboardProps {
@@ -18,43 +20,6 @@ interface DashboardProps {
   isDarkMode: boolean;
   setIsDarkMode: (val: boolean) => void;
 }
-
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-
-const useCountUp = (target: number, duration = 900) => {
-  const [value, setValue] = useState(0);
-  const previous = useRef(0);
-
-  useEffect(() => {
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) {
-      setValue(target);
-      previous.current = target;
-      return;
-    }
-
-    const from = previous.current;
-    const start = performance.now();
-    let frame = 0;
-
-    const tick = (now: number) => {
-      const progress = Math.min((now - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setValue(Math.round(from + (target - from) * eased));
-      if (progress < 1) {
-        frame = requestAnimationFrame(tick);
-      } else {
-        previous.current = target;
-      }
-    };
-
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [target, duration]);
-
-  return value;
-};
 
 const CIRCLE = 'M12 3.2c4.8-.3 8.9 3.6 8.8 8.5-.1 4.9-4 8.6-8.8 8.4-4.9-.2-8.5-4-8.3-8.8C3.9 6.9 7.5 3.4 12 3.2Z';
 
