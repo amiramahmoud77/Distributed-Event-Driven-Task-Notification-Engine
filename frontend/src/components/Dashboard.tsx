@@ -1,20 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Sun, Moon, LogOut, Plus, Inbox, ArrowRight } from 'lucide-react';
+import { Sun, Moon, LogOut, Plus, Inbox } from 'lucide-react';
 import { api } from '../api';
 import { CreateTaskModal } from './CreateTaskModal';
-import {
-  nextAction,
-  nextStatus,
-  palette,
-  priorityColor,
-  radii,
-} from './dashboard/constants';
-import { CIRCLE, Doodle } from './dashboard/Doodle';
-import { formatDate } from './dashboard/format';
-import { PriorityMark } from './dashboard/PriorityMark';
+import { palette, radii } from './dashboard/constants';
+import { CIRCLE } from './dashboard/Doodle';
 import { ProgressRing } from './dashboard/ProgressRing';
 import { StatCard } from './dashboard/StatCard';
-import type { Task, TaskPriority, TaskStatus } from '../types';
+import { TaskRow } from './dashboard/TaskRow';
+import type { Task, TaskStatus } from '../types';
 
 interface DashboardProps {
   onLogout: () => void;
@@ -71,7 +64,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
 
   const countBy = (status: TaskStatus) => tasks.filter((task) => task.status === status).length;
   const accent = (status: TaskStatus) => (isDarkMode ? palette[status].dark : palette[status].light);
-  const priorityAccent = (priority: TaskPriority) => (isDarkMode ? priorityColor[priority].dark : priorityColor[priority].light);
 
   const openCount = countBy('PENDING') + countBy('IN_PROGRESS');
   const percent = tasks.length ? Math.round((countBy('COMPLETED') / tasks.length) * 100) : 0;
@@ -260,102 +252,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
 
           {!isLoading && !error && tasks.length > 0 && (
             <ul className="space-y-3">
-              {tasks.map((task, index) => {
-                const statusColor = accent(task.status);
-                const color = priorityAccent(task.priority);
-                const isSelected = selectedId === task._id;
-                const overdue = !!task.dueDate && task.status !== 'COMPLETED' && new Date(task.dueDate) < startOfToday;
-                const upcoming = nextStatus[task.status];
-
-                return (
-                  <li key={task._id}>
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      aria-pressed={isSelected}
-                      onClick={() => toggleSelected(task._id)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          toggleSelected(task._id);
-                        }
-                      }}
-                      className={`pop relative cursor-pointer overflow-hidden border py-5 pl-7 pr-5 outline-none transition-[box-shadow,border-color,background-color] duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F2A900] ${
-                        task._id === newId ? 'fresh' : ''
-                      }`}
-                      style={{
-                        background: isSelected ? `${color}12` : t.surface,
-                        borderColor: isSelected ? color : t.border,
-                        borderRadius: 20,
-                        boxShadow: isSelected ? `0 0 0 1px ${color}, 0 0 26px ${color}45` : 'none',
-                        animationDelay: `${400 + index * 70}ms`,
-                      }}
-                    >
-                      <span
-                        aria-hidden="true"
-                        className="absolute inset-y-0 left-0 w-[5px]"
-                        style={{ background: color, opacity: 0.85 }}
-                      />
-
-                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-3">
-                        <div className="min-w-0">
-                          <p dir="auto" style={{ textAlign: 'left' }} className="truncate text-lg font-medium">
-                            {task.title}
-                          </p>
-                          {task.description && (
-                            <p dir="auto" style={{ textAlign: 'left' }} className={`mt-0.5 truncate text-sm ${t.muted}`}>
-                              {task.description}
-                            </p>
-                          )}
-                        </div>
-
-                        <span
-                          className="badge inline-flex h-7 items-center gap-1.5 justify-self-end rounded-full px-3 text-[13px] font-semibold"
-                          style={{
-                            color: statusColor,
-                            background: `${statusColor}1F`,
-                            border: `1px solid ${statusColor}55`,
-                            animationDelay: `${600 + index * 70}ms`,
-                          }}
-                        >
-                          <Doodle kind={task.status} className="h-3.5 w-3.5" />
-                          {palette[task.status].label}
-                        </span>
-
-                        <div className="col-span-2 flex flex-wrap items-center gap-3">
-                          <PriorityMark priority={task.priority} color={color} isDarkMode={isDarkMode} />
-                          <span
-                            className={`rounded-full px-2.5 py-0.5 text-xs ${overdue ? `font-medium ${t.danger}` : t.muted}`}
-                            style={{ background: overdue ? '#F0787826' : isDarkMode ? '#FFFFFF10' : '#14213D0F' }}
-                          >
-                            {task.dueDate ? `${overdue ? 'Overdue, ' : 'Due '}${formatDate(task.dueDate)}` : 'No due date'}
-                          </span>
-
-                          {upcoming && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleStatusChange(task, upcoming);
-                              }}
-                              onKeyDown={(e) => e.stopPropagation()}
-                              className={`ml-auto inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-[filter] hover:brightness-125 ${focus}`}
-                              style={{
-                                color: accent(upcoming),
-                                background: `${accent(upcoming)}1F`,
-                                border: `1px solid ${accent(upcoming)}55`,
-                              }}
-                            >
-                              {nextAction[task.status]}
-                              <ArrowRight className="h-4 w-4" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-                );
-              })}
+              {tasks.map((task, index) => (
+                <TaskRow
+                  key={task._id}
+                  task={task}
+                  index={index}
+                  isDarkMode={isDarkMode}
+                  isSelected={selectedId === task._id}
+                  isNew={task._id === newId}
+                  startOfToday={startOfToday}
+                  surface={t.surface}
+                  border={t.border}
+                  mutedClass={t.muted}
+                  dangerClass={t.danger}
+                  focus={focus}
+                  onToggle={toggleSelected}
+                  onStatusChange={handleStatusChange}
+                />
+              ))}
             </ul>
           )}
         </section>
