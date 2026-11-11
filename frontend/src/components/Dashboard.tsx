@@ -7,6 +7,7 @@ import { CIRCLE } from './dashboard/Doodle';
 import { FilterBar } from './dashboard/FilterBar';
 import { filterTasks } from './dashboard/filters';
 import type { StatusFilter } from './dashboard/filters';
+import { NoResults } from './dashboard/NoResults';
 import { ProgressRing } from './dashboard/ProgressRing';
 import { StatCard } from './dashboard/StatCard';
 import { TaskRow } from './dashboard/TaskRow';
@@ -274,26 +275,36 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
                 focus={focus}
               />
 
-              <ul className="space-y-3">
-                {visibleTasks.map((task, index) => (
-                  <TaskRow
-                    key={task._id}
-                    task={task}
-                    index={index}
-                    isDarkMode={isDarkMode}
-                    isSelected={selectedId === task._id}
-                    isNew={task._id === newId}
-                    startOfToday={startOfToday}
-                    surface={t.surface}
-                    border={t.border}
-                    mutedClass={t.muted}
-                    dangerClass={t.danger}
-                    focus={focus}
-                    onToggle={toggleSelected}
-                    onStatusChange={handleStatusChange}
-                  />
-                ))}
-              </ul>
+              {visibleTasks.length === 0 ? (
+                <NoResults
+                  filter={filter}
+                  onClear={() => setFilter('ALL')}
+                  borderColor={t.border}
+                  mutedClass={t.muted}
+                  focus={focus}
+                />
+              ) : (
+                <ul className="space-y-3">
+                  {visibleTasks.map((task, index) => (
+                    <TaskRow
+                      key={task._id}
+                      task={task}
+                      index={index}
+                      isDarkMode={isDarkMode}
+                      isSelected={selectedId === task._id}
+                      isNew={task._id === newId}
+                      startOfToday={startOfToday}
+                      surface={t.surface}
+                      border={t.border}
+                      mutedClass={t.muted}
+                      dangerClass={t.danger}
+                      focus={focus}
+                      onToggle={toggleSelected}
+                      onStatusChange={handleStatusChange}
+                    />
+                  ))}
+                </ul>
+              )}
             </>
           )}
         </section>
