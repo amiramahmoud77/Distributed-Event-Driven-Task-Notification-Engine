@@ -5,10 +5,11 @@ import { CreateTaskModal } from './CreateTaskModal';
 import { palette, radii } from './dashboard/constants';
 import { CIRCLE } from './dashboard/Doodle';
 import { FilterBar } from './dashboard/FilterBar';
-import { filterTasks } from './dashboard/filters';
+import { filterTasks, searchTasks } from './dashboard/filters';
 import type { StatusFilter } from './dashboard/filters';
 import { NoResults } from './dashboard/NoResults';
 import { ProgressRing } from './dashboard/ProgressRing';
+import { SearchBox } from './dashboard/SearchBox';
 import { StatCard } from './dashboard/StatCard';
 import { TaskRow } from './dashboard/TaskRow';
 import type { Task, TaskStatus } from '../types';
@@ -28,6 +29,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [filter, setFilter] = useState<StatusFilter>('ALL');
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -45,8 +47,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
   }, []);
 
   const handleCreated = (task: Task) => {
-    // Show everything again, otherwise a new Pending task could be hidden by the filter.
+    // Show everything again, otherwise a new task could be hidden by the filter or the search.
     setFilter('ALL');
+    setQuery('');
     setTasks((prev) => [task, ...prev]);
     setNewId(task._id);
   };
@@ -69,7 +72,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
 
   const toggleSelected = (id: string) => setSelectedId((current) => (current === id ? null : id));
 
-  const visibleTasks = filterTasks(tasks, filter);
+  const visibleTasks = searchTasks(filterTasks(tasks, filter), query);
 
   const countBy = (status: TaskStatus) => tasks.filter((task) => task.status === status).length;
   const accent = (status: TaskStatus) => (isDarkMode ? palette[status].dark : palette[status].light);
@@ -117,6 +120,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
 
   const focus = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F2A900]';
   const gridCols = countBy('FAILED') > 0 ? 'sm:grid-cols-2 lg:grid-cols-4' : 'sm:grid-cols-3';
+  const isNarrowed = filter !== 'ALL' || query.trim() !== '';
 
   return (
     <div
@@ -224,7 +228,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
             <h2 className="text-2xl font-semibold tracking-tight">Your tasks</h2>
             {!isLoading && !error && (
               <span className={`text-sm ${t.muted}`}>
-                {filter === 'ALL' ? `${tasks.length} in total` : `${visibleTasks.length} of ${tasks.length}`}
+                {isNarrowed ? `${visibleTasks.length} of ${tasks.length}` : `${tasks.length} in total`}
               </span>
             )}
           </div>
@@ -265,6 +269,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
 
           {!isLoading && !error && tasks.length > 0 && (
             <>
+              <SearchBox
+                value={query}
+                onChange={setQuery}
+                borderColor={t.border}
+                surface={t.surface}
+                mutedClass={t.muted}
+                focus={focus}
+              />
+
               <FilterBar
                 value={filter}
                 onChange={setFilter}
@@ -278,7 +291,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
               {visibleTasks.length === 0 ? (
                 <NoResults
                   filter={filter}
-                  onClear={() => setFilter('ALL')}
+                  onClear={() => {
+                    setFilter('ALL');
+                    setQuery('');
+                  }}
                   borderColor={t.border}
                   mutedClass={t.muted}
                   focus={focus}
