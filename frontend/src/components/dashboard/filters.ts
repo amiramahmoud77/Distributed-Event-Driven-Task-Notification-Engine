@@ -14,3 +14,13 @@ export const filterTasks = (tasks: Task[], filter: StatusFilter) =>
   filter === 'ALL' ? tasks : tasks.filter((task) => task.status === filter);
 
 export const countFor = (tasks: Task[], filter: StatusFilter) => filterTasks(tasks, filter).length;
+export const searchTasks = (tasks: Task[], query: string) => {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return tasks;
+
+  return tasks.filter(
+    (task) =>
+      task.title.toLowerCase().includes(needle) ||
+      (task.description ?? '').toLowerCase().includes(needle)
+  );
+};
