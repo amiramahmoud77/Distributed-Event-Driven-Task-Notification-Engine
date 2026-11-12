@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Trash2 } from 'lucide-react';
 import { nextAction, nextStatus, palette, priorityColor } from './constants';
 import { Doodle } from './Doodle';
 import { formatDate } from './format';
@@ -20,6 +20,7 @@ interface TaskRowProps {
   focus: string;
   onToggle: (id: string) => void;
   onStatusChange: (task: Task, status: TaskStatus) => void;
+  onDelete?: (task: Task) => void;
 }
 
 export const TaskRow: React.FC<TaskRowProps> = ({
@@ -36,6 +37,7 @@ export const TaskRow: React.FC<TaskRowProps> = ({
   focus,
   onToggle,
   onStatusChange,
+  onDelete,
 }) => {
   const accent = (status: TaskStatus) => (isDarkMode ? palette[status].dark : palette[status].light);
   const statusColor = accent(task.status);
@@ -103,25 +105,42 @@ export const TaskRow: React.FC<TaskRowProps> = ({
               {task.dueDate ? `${overdue ? 'Overdue, ' : 'Due '}${formatDate(task.dueDate)}` : 'No due date'}
             </span>
 
-            {upcoming && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onStatusChange(task, upcoming);
-                }}
-                onKeyDown={(e) => e.stopPropagation()}
-                className={`ml-auto inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-[filter] hover:brightness-125 ${focus}`}
-                style={{
-                  color: accent(upcoming),
-                  background: `${accent(upcoming)}1F`,
-                  border: `1px solid ${accent(upcoming)}55`,
-                }}
-              >
-                {nextAction[task.status]}
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            )}
+            <div className="ml-auto flex items-center gap-2">
+              {onDelete && (
+                <button
+                  type="button"
+                  aria-label={`Delete “${task.title}”`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(task);
+                  }}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  className={`rounded-lg p-2 transition-colors hover:bg-[#F0787826] hover:text-[#F07878] ${mutedClass} ${focus}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
+
+              {upcoming && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusChange(task, upcoming);
+                  }}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-[filter] hover:brightness-125 ${focus}`}
+                  style={{
+                    color: accent(upcoming),
+                    background: `${accent(upcoming)}1F`,
+                    border: `1px solid ${accent(upcoming)}55`,
+                  }}
+                >
+                  {nextAction[task.status]}
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
