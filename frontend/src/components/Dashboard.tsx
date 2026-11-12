@@ -10,6 +10,9 @@ import type { StatusFilter } from './dashboard/filters';
 import { NoResults } from './dashboard/NoResults';
 import { ProgressRing } from './dashboard/ProgressRing';
 import { SearchBox } from './dashboard/SearchBox';
+import { sortTasks } from './dashboard/sort';
+import type { SortKey } from './dashboard/sort';
+import { SortSelect } from './dashboard/SortSelect';
 import { StatCard } from './dashboard/StatCard';
 import { TaskRow } from './dashboard/TaskRow';
 import type { Task, TaskStatus } from '../types';
@@ -30,6 +33,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
   const [actionError, setActionError] = useState<string | null>(null);
   const [filter, setFilter] = useState<StatusFilter>('ALL');
   const [query, setQuery] = useState('');
+  const [sortKey, setSortKey] = useState<SortKey>('NEWEST');
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -50,6 +54,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
     // Show everything again, otherwise a new task could be hidden by the filter or the search.
     setFilter('ALL');
     setQuery('');
+    setSortKey('NEWEST');
     setTasks((prev) => [task, ...prev]);
     setNewId(task._id);
   };
@@ -72,7 +77,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
 
   const toggleSelected = (id: string) => setSelectedId((current) => (current === id ? null : id));
 
-  const visibleTasks = searchTasks(filterTasks(tasks, filter), query);
+  const visibleTasks = sortTasks(searchTasks(filterTasks(tasks, filter), query), sortKey);
 
   const countBy = (status: TaskStatus) => tasks.filter((task) => task.status === status).length;
   const accent = (status: TaskStatus) => (isDarkMode ? palette[status].dark : palette[status].light);
@@ -224,12 +229,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
         </div>
 
         <section>
-          <div className="mb-5 flex items-baseline justify-between">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-2xl font-semibold tracking-tight">Your tasks</h2>
             {!isLoading && !error && (
-              <span className={`text-sm ${t.muted}`}>
-                {isNarrowed ? `${visibleTasks.length} of ${tasks.length}` : `${tasks.length} in total`}
-              </span>
+              <div className="flex items-center gap-4">
+                <span className={`text-sm ${t.muted}`}>
+                  {isNarrowed ? `${visibleTasks.length} of ${tasks.length}` : `${tasks.length} in total`}
+                </span>
+                {tasks.length > 0 && (
+                  <SortSelect
+                    value={sortKey}
+                    onChange={setSortKey}
+                    isDarkMode={isDarkMode}
+                    borderColor={t.border}
+                    surface={t.surface}
+                    mutedClass={t.muted}
+                  />
+                )}
+              </div>
             )}
           </div>
 
