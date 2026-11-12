@@ -3,6 +3,7 @@ import { Sun, Moon, LogOut, Plus, Inbox } from 'lucide-react';
 import { api } from '../api';
 import { CreateTaskModal } from './CreateTaskModal';
 import { palette, radii } from './dashboard/constants';
+import { ConfirmDialog } from './dashboard/ConfirmDialog';
 import { CIRCLE } from './dashboard/Doodle';
 import { FilterBar } from './dashboard/FilterBar';
 import { filterTasks, searchTasks } from './dashboard/filters';
@@ -34,6 +35,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
   const [filter, setFilter] = useState<StatusFilter>('ALL');
   const [query, setQuery] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('NEWEST');
+  const [pendingDelete, setPendingDelete] = useState<Task | null>(null);
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -87,6 +89,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
       setTasks(snapshot);
       setActionError(`Couldn’t delete “${task.title}”. ${err.message}`);
     }
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDelete) return;
+    const task = pendingDelete;
+    setPendingDelete(null);
+    handleDelete(task);
   };
 
   const toggleSelected = (id: string) => setSelectedId((current) => (current === id ? null : id));
@@ -348,7 +357,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
                       focus={focus}
                       onToggle={toggleSelected}
                       onStatusChange={handleStatusChange}
-                      onDelete={handleDelete}
+                      onDelete={setPendingDelete}
                     />
                   ))}
                 </ul>
@@ -363,6 +372,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
           isDarkMode={isDarkMode}
           onClose={() => setIsModalOpen(false)}
           onCreated={handleCreated}
+        />
+      )}
+
+      {pendingDelete && (
+        <ConfirmDialog
+          isDarkMode={isDarkMode}
+          title="Delete this task?"
+          message={`“${pendingDelete.title}” will be removed. This can’t be undone.`}
+          confirmLabel="Delete task"
+          onConfirm={confirmDelete}
+          onCancel={() => setPendingDelete(null)}
         />
       )}
     </div>
