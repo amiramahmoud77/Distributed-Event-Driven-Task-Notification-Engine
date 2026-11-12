@@ -75,6 +75,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
     }
   };
 
+  const handleDelete = async (task: Task) => {
+    const snapshot = tasks;
+    setActionError(null);
+    if (selectedId === task._id) setSelectedId(null);
+    setTasks((prev) => prev.filter((item) => item._id !== task._id));
+
+    try {
+      await api(`/api/tasks/${task._id}`, { method: 'DELETE' });
+    } catch (err: any) {
+      setTasks(snapshot);
+      setActionError(`Couldn’t delete “${task.title}”. ${err.message}`);
+    }
+  };
+
   const toggleSelected = (id: string) => setSelectedId((current) => (current === id ? null : id));
 
   const visibleTasks = sortTasks(searchTasks(filterTasks(tasks, filter), query), sortKey);
@@ -334,6 +348,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
                       focus={focus}
                       onToggle={toggleSelected}
                       onStatusChange={handleStatusChange}
+                      onDelete={handleDelete}
                     />
                   ))}
                 </ul>
