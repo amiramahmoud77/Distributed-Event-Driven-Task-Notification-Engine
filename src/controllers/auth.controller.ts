@@ -31,7 +31,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       role: 'user',
     });
 
-    const token = generateToken(user._id.toString(), user.role);
+    const token = generateToken(user._id.toString(), user.role, user.email);
 
     res.status(201).json({
       success: true,
@@ -70,7 +70,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const token = generateToken(user._id.toString(), user.role);
+    const token = generateToken(user._id.toString(), user.role, user.email);
 
     res.status(200).json({
       success: true,
