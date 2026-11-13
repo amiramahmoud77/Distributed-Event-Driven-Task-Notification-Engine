@@ -6,7 +6,9 @@ import { generateToken } from '../utils/jwt.util';
 // Register User
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, email, password, role } = req.body;
+    // The role is deliberately not read from the request: anyone could send
+    // "admin". New accounts are always regular users.
+    const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
       res.status(400).json({ success: false, message: 'Please provide all required fields' });
@@ -26,10 +28,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       name,
       email,
       password: hashedPassword,
-      role: role || 'user',
+      role: 'user',
     });
 
-    const token = generateToken(user._id.toString(), user.role);
+    const token = generateToken(user._id.toString(), user.role, user.email);
 
     res.status(201).json({
       success: true,
@@ -68,7 +70,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const token = generateToken(user._id.toString(), user.role);
+    const token = generateToken(user._id.toString(), user.role, user.email);
 
     res.status(200).json({
       success: true,

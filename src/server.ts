@@ -1,3 +1,7 @@
+// Must stay first: it loads .env before any other module reads process.env
+// (config/jwt.ts reads JWT_SECRET as soon as it is imported).
+import 'dotenv/config';
+
 import app from './app';
 import { connectDB } from './config/db';
 import './workers/task.worker';

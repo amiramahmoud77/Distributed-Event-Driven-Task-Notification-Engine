@@ -13,6 +13,9 @@ export enum TaskPriority {
   HIGH = 'HIGH',
 }
 
+export const TITLE_MAX_LENGTH = 120;
+export const DESCRIPTION_MAX_LENGTH = 1000;
+
 export interface ITask extends Document {
   title: string;
   description?: string;
@@ -30,10 +33,12 @@ const taskSchema = new Schema<ITask>(
       type: String,
       required: true,
       trim: true,
+      maxlength: [TITLE_MAX_LENGTH, `Title must be at most ${TITLE_MAX_LENGTH} characters`],
     },
     description: {
       type: String,
       trim: true,
+      maxlength: [DESCRIPTION_MAX_LENGTH, `Description must be at most ${DESCRIPTION_MAX_LENGTH} characters`],
     },
     status: {
       type: String,
