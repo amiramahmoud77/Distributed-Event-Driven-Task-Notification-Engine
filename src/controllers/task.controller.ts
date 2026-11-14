@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import { Task } from '../models/task.model';
 import { taskQueue } from '../queues/task.queue';
+import { sendError } from '../utils/sendError';
 
 // Create a new task
 export const createTask = async (req: Request, res: Response): Promise<void> => {
@@ -31,7 +32,7 @@ export const createTask = async (req: Request, res: Response): Promise<void> => 
 
     res.status(201).json({ success: true, data: task });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error });
+    sendError(res, error);
   }
 };
 
@@ -75,7 +76,7 @@ export const getTasks = async (req: Request, res: Response): Promise<void> => {
       data: tasks,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error });
+    sendError(res, error);
   }
 };
 
@@ -98,7 +99,7 @@ export const getTaskById = async (req: Request, res: Response): Promise<void> =>
 
     res.status(200).json({ success: true, data: task });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error });
+    sendError(res, error);
   }
 };
 
@@ -141,7 +142,7 @@ export const updateTask = async (req: Request, res: Response): Promise<void> => 
 
     res.status(200).json({ success: true, data: task });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error });
+    sendError(res, error);
   }
 };
 
@@ -163,6 +164,6 @@ export const deleteTask = async (req: Request, res: Response): Promise<void> => 
 
     res.status(200).json({ success: true, message: 'Task deleted successfully' });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error', error });
+    sendError(res, error);
   }
 };
