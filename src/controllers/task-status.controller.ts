@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import { Task, TaskStatus } from '../models/task.model';
 import { taskQueue } from '../queues/task.queue';
+import { sendError } from '../utils/sendError';
 
 export const updateTaskStatus = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -50,7 +51,7 @@ export const updateTaskStatus = async (req: Request, res: Response): Promise<voi
       message: 'Task status updated successfully',
       data: task,
     });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  } catch (error) {
+    sendError(res, error);
   }
 };
