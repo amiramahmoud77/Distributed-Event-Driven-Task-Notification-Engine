@@ -24,12 +24,11 @@ export const updateTaskStatus = async (req: Request, res: Response): Promise<voi
       filter.userId = req.user?.id;
     }
 
-    const task = await Task.findOneAndUpdate(
+        const task = await Task.findOneAndUpdate(
       filter,
       { status },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     );
-
     // A task that belongs to someone else looks the same as a missing one,
     // so ids cannot be probed.
     if (!task) {

@@ -122,7 +122,7 @@ export const updateTask = async (req: Request, res: Response): Promise<void> => 
     }
 
     const task = await Task.findOneAndUpdate(filter, updates, {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     });
 
