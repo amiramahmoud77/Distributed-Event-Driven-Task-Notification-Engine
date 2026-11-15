@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { countFor, filterTasks, searchTasks } from './filters';
 import type { Task } from '../../types';
 
+// Builds a complete task with default values; each test overrides only what it cares about.
 const makeTask = (overrides: Partial<Task> = {}): Task => ({
   _id: '1',
   title: 'Write report',
@@ -66,7 +67,7 @@ describe('searchTasks', () => {
     expect(() => searchTasks([makeTask({ description: undefined })], 'anything')).not.toThrow();
   });
 
-   it('finds Arabic titles', () => {
+  it('finds Arabic titles', () => {
     expect(searchTasks(tasks, 'الذهاب').map((task) => task._id)).toEqual(['4']);
   });
 
