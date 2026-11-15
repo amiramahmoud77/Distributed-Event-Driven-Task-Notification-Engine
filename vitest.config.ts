@@ -4,6 +4,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['tests/**/*.test.ts'],
+    setupFiles: ['tests/mock-queue.ts'],
     // Each test file gets its own in-memory database, so run them one at a time.
     fileParallelism: false,
     testTimeout: 30000,
