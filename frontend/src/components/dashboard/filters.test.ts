@@ -66,8 +66,13 @@ describe('searchTasks', () => {
     expect(() => searchTasks([makeTask({ description: undefined })], 'anything')).not.toThrow();
   });
 
-  it('finds Arabic titles', () => {
-    expect(searchTasks(tasks, 'الجيم').map((task) => task._id)).toEqual(['4']);
+   it('finds Arabic titles', () => {
+    expect(searchTasks(tasks, 'الذهاب').map((task) => task._id)).toEqual(['4']);
+  });
+
+  it('matches part of a word, not whole words', () => {
+    // "للجيم" contains "جيم", so a shorter search still finds it.
+    expect(searchTasks(tasks, 'جيم').map((task) => task._id)).toEqual(['4']);
   });
 
   it('returns an empty list when nothing matches', () => {
