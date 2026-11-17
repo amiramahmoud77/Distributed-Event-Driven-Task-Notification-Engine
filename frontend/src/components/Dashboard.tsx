@@ -40,8 +40,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, isDarkMode, setI
   useEffect(() => {
     const loadTasks = async () => {
       try {
-        const result = await api('/api/tasks');
-        setTasks(result.data);
+        const result = await api('/api/tasks?limit=100');
+                setTasks(result.data);
       } catch (err: any) {
         setError(err.message);
       } finally {
