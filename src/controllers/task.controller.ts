@@ -4,6 +4,10 @@ import { Task } from '../models/task.model';
 import { taskQueue } from '../queues/task.queue';
 import { sendError } from '../utils/sendError';
 
+// The largest page the API will return, so one request cannot ask for everything.
+const DEFAULT_PAGE_SIZE = 10;
+const MAX_PAGE_SIZE = 100;
+
 // Create a new task
 export const createTask = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -39,7 +43,15 @@ export const createTask = async (req: Request, res: Response): Promise<void> => 
 // Get all tasks with search, filters, and pagination
 export const getTasks = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { status, priority, search, page = 1, limit = 10 } = req.query;
+    const { status, priority, search } = req.query;
+
+    // Anything that is not a sensible number falls back to a safe value.
+    const page = Math.max(Math.floor(Number(req.query.page)) || 1, 1);
+    const limit = Math.min(
+      Math.max(Math.floor(Number(req.query.limit)) || DEFAULT_PAGE_SIZE, 1),
+      MAX_PAGE_SIZE
+    );
+
     const query: any = {};
 
     if (req.user && req.user.role !== 'admin') {
@@ -58,11 +70,11 @@ export const getTasks = async (req: Request, res: Response): Promise<void> => {
       query.title = { $regex: search, $options: 'i' };
     }
 
-    const skip = (Number(page) - 1) * Number(limit);
+    const skip = (page - 1) * limit;
 
     const tasks = await Task.find(query)
       .skip(skip)
-      .limit(Number(limit))
+      .limit(limit)
       .sort({ createdAt: -1 });
 
     const total = await Task.countDocuments(query);
@@ -71,8 +83,8 @@ export const getTasks = async (req: Request, res: Response): Promise<void> => {
       success: true,
       count: tasks.length,
       total,
-      totalPages: Math.ceil(total / Number(limit)),
-      currentPage: Number(page),
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
       data: tasks,
     });
   } catch (error) {
